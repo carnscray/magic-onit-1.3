@@ -31,7 +31,7 @@ export default function Index() {
     <div className="bg-orange-50 h-screen flex justify-center items-center">
       {loaderData.user ? (
         <div>
-          <h1 className="text-3xl">Welcome to Remix</h1>
+          <h1 className="text-3xl">Welcome to Katie</h1>
 
           <h1 className="text-xl text-slate-600">
             You are signed in as {loaderData.user.email}
@@ -49,7 +49,7 @@ export default function Index() {
         </div>
       ) : (
         <div>
-          <h1 className="text-3xl">Welcome to Remix</h1>
+          <h1 className="text-3xl">Welcome to Katie</h1>
 
           <h1 className="text-xl text-slate-600 mb-2">Please sign in</h1>
           <Link

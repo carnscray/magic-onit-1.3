@@ -106,7 +106,6 @@ export default function CompHome() {
         {/* 1. Icon (list_alt) */}
         <span className="material-symbols-outlined text-3xl text-gray-800">
             Newsmode
-
         </span>
         
         {/* 2. Main Title */}
@@ -205,7 +204,7 @@ export default function CompHome() {
                 </div>
 
                 {/* --- RIGHT SIDE: Image Placeholder --- */}
-                <div className="h-10 w-10 bg-gray-200 rounded-full flex-shrink-0 ml-4"> 
+                <div className="h-24 w-24 bg-gray-200 rounded-full flex-shrink-0 ml-4"> 
                     {/* Placeholder for future image */}
                 </div>
 
