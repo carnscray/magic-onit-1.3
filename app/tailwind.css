@@ -1,3 +1,204 @@
+
+/* Import Outfit from Google Fonts — with 400, 500, 600 */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Import Manrope from Google Fonts — with 300, 400, 500, 600, 700, 800 */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
+
+/* Import Poppins from Google Fonts — with 300, 400, 500, 600, 700 */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Import Inter from Google Fonts — with 300, 400, 500, 600, 700, 800, 900 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Import Bricolage Grotesque from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@8..30,400;8..30,500;8..30,700;8..30,900&display=swap');
+
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Tailwind base layer override */
+@layer base {
+
+  body, p, a, h3, h4 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 300;
+    
+  }
+
+  h1, h2 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: bold;
+  }
+}
+
+
+
+
+/* Selected colours */
+:root {
+  --color-main: #008e5e;
+  --color-second: #09c787;  /*bright red #ae1111*/
+
+  --color-main-dark: #008e5e;
+  --color-main-medium: #516080;
+  --color-main-light: #76819B;
+  --color-main-lighter: #9CA3B7;
+  --color-main-lightest: #EBECF0;
+  
+  --color-black-main: #383737;
+  --color-black-medium: #4a4949;
+  --color-black-light: #F8F8F8;
+  --color-black-lighter: #e8e4e4;
+
+  
+  --color-buttonmain: var(--color-main);
+  --color-buttonhover: var(--color-second);
+  --color-buttontext: #ffffff;
+
+  --color-buttonaltmain: #ffffff;
+  --color-buttonalthover: var(--color-black-lighter);
+  --color-buttonalttext: var(--color-black-medium);
+
+  --color-bordermain: var(--color-main);
+  --color-borderlight: var(--color-black-lighter);
+
+  --color-cardtitle: var(--color-black-main);
+  --color-cardsub: var(--color-black-medium);
+  --color-cardicon: var(--color-main);
+  --color-cardiconoff: var( --color-black-lighter);
+
+  --color-bgmain: var(--color-main);
+  --color-bgsecond: var(--color-second);
+
+
+
+}
+
+
+
+
+
+@layer utilities {
+  .text-main {
+    color: var(--color-main);
+  }
+
+  .text-second {
+    color: var(--color-second);
+  }
+
+  .text-cardtitle {
+    color: var(--color-cardtitle);
+  }
+
+  .text-cardsub {
+    color: var(--color-cardsub);
+  }
+
+  .text-cardicon {
+    color: var(--color-cardicon);
+  }
+
+  .text-cardiconoff {
+    color: var(--color-cardiconoff);
+  }
+
+
+
+    .text-blackmain{
+    color: var(  --color-black-main);
+  }
+
+    .text-blackmedium {
+    color: var(--color-black-medium);
+  }
+
+    .text-blacklight {
+    color: var(--color-black-light);
+  }
+
+
+
+  @media (min-width: 640px) {
+    .sm\:text-main {
+      color: var(--color-main);
+    }
+  }
+
+
+  
+ /* Border utilities */
+
+  .bg-main {
+    background-color: var(--color-bgmain);
+  }
+
+  .bg-second {
+    background-color: var(--color-bgsecond);
+  }
+
+  .bg-blacklight {
+    background-color: var(--color-black-light);
+  }
+
+  .border-main {
+    border-color: var(--color-bordermain);
+  }
+
+  .border-light {
+    border-color: var(--color-borderlight);
+  }
+
+
+ /* Button utilities */
+
+  .hover\:bg-main:hover {
+    background-color: var(--color-main);
+  }
+
+  .bg-buttonmain {
+    background-color: var(--color-buttonmain);
+  }
+
+  .hover\:bg-buttonhover:hover {
+    background-color: var(--color-buttonhover);
+  }
+
+  .bg-buttonaltmain {
+    background-color: var(--color-buttonaltmain);
+  }
+
+  .hover\:bg-buttonalthover:hover {
+    background-color: var(--color-buttonalthover);
+  }
+
+  .text-buttontext {
+  color: var(--color-buttontext);
+  }
+
+  .text-buttonalttext {
+    color: var(--color-buttonalttext);
+  }
+
+
+
+
+
+
+
+/*
+
+* {
+  outline: 1px solid red;  
+}
+temporary debug - red line around everything */
+
+
+
+
+} 
