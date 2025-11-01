@@ -11,7 +11,7 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
     if (error) {
       return redirect("/auth");
     }
-    return redirect("/", {
+    return redirect("/comps", {
       headers,
     });
   }
