@@ -9,7 +9,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { error } = await supabaseClient.auth.signInWithOtp({
     email: formData.get("email") as string,
     options: {
-      emailRedirectTo: "http://localhost:5174/auth-callback",
+      emailRedirectTo: "http://localhost:5173/auth-callback",
     },
   });
   console.log('what is error', error);
