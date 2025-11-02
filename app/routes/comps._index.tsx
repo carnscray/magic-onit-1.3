@@ -4,17 +4,20 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
 // --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS ---
-export const loader = async ({ request }: LoaderFunctionFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => { // NOTE: Fixed type to LoaderFunctionArgs
   const { supabaseClient } = createSupabaseServerClient(request);
 
-  // 1. Check for logged-in user session
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) {
+  // 1. Check for logged-in user session (SECURELY)
+  // 🛑 CHANGE: Swapped getSession() for getUser()
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(); 
+  
+  if (userError || !user) {
     return redirect("/auth");
   }
 
   // 2. Get the logged-in Supabase user ID (UUID)
-  const authUserId = session.user.id;
+  // Now we use the secure `user.id`
+  const authUserId = user.id;
 
   // 3. Fetch the associated tipster details (ID, Nickname, Slogan)
   const { data: profileData, error: profileError } = await supabaseClient
@@ -25,6 +28,7 @@ export const loader = async ({ request }: LoaderFunctionFunctionArgs) => {
 
   if (profileError || !profileData || !profileData.tipster) {
     console.error("Error fetching user profile or tipster details:", profileError);
+    // If the user is authenticated but has no profile, redirect them
     return redirect("/auth"); 
   }
 
@@ -34,7 +38,7 @@ export const loader = async ({ request }: LoaderFunctionFunctionArgs) => {
   // 4. Fetch the competition names and slogan
   const { data: compsData, error: compsError } = await supabaseClient
     .from("comp_tipster")
-    .select("comp!inner(id, comp_name, comp_slogan)") // <-- Added comp_slogan
+    .select("comp!inner(id, comp_name, comp_slogan)")
     .eq("tipster", tipsterId); 
 
   if (compsError) {
@@ -70,12 +74,12 @@ export const loader = async ({ request }: LoaderFunctionFunctionArgs) => {
   return json({ competitions: competitionsWithCount, tipsterDetails });
 };
 
-// --- REACT COMPONENT: RENDERING DATA ---
+// --- REACT COMPONENT: RENDERING DATA (UNCHANGED) ---
 export default function Comps() {
   const { competitions, tipsterDetails } = useLoaderData<typeof loader>();
 
   return (
-    <div className="p-8 max-w-xl mx-auto lg:max-w-7xl"> {/* Expanded max-width for large screens */}
+    <div className="p-8 max-w-xl mx-auto lg:max-w-7xl">
       
       {/* Tipster Nickname and Slogan Header (omitted for brevity) */}
       <div className="text-center mb-10 pb-4 border-b border-indigo-200">
@@ -99,17 +103,11 @@ export default function Comps() {
         </p>
       ) : (
         <ul 
-          // 🛑 NEW: Responsive Grid Classes 🛑
-          // 1. Default to one column (mobile)
-          // 2. Use grid
-          // 3. Add space between items (gap)
-          // 4. On large screens (lg:), switch to 3 columns
           className="grid grid-cols-1 gap-6 lg:grid-cols-3"
         >
           {competitions.map((comp) => (
             <li 
               key={comp.id} 
-              // Set position-relative for absolute positioning
               className="p-4 bg-white shadow-lg hover:shadow-xl transition-shadow rounded-xl border border-gray-100 relative" 
             >
               
@@ -131,7 +129,7 @@ export default function Comps() {
               {/* --- TOP LEFT: Comp Name --- */}
               <Link 
                 to={`/comps/${comp.id}`} 
-                className="text-xl font-heading font-bold text-indigo-600 hover:text-indigo-800 transition block pr-16" // Added pr-16 to prevent name overlapping icon
+                className="text-xl font-heading font-bold text-indigo-600 hover:text-indigo-800 transition block pr-16"
               >
                 {comp.comp_name}
               </Link>
