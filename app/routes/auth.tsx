@@ -6,10 +6,14 @@ import { createSupabaseServerClient } from "~/supabase/supabase.server";
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const formData = await request.formData();
+
+  // Use the environment variable, falling back to the local value if not present
+  const emailRedirectTo = process.env.AUTH_REDIRECT_URL;
+
   const { error } = await supabaseClient.auth.signInWithOtp({
     email: formData.get("email") as string,
     options: {
-      emailRedirectTo: "http://localhost:5173/auth-callback",
+      emailRedirectTo: emailRedirectTo,
     },
   });
   console.log('what is error', error);
