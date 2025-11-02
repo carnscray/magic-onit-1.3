@@ -1,12 +1,18 @@
+// app/routes/comps.$comp_id.$comp_raceday_id.tsx
+
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
-// --- TYPE DEFINITIONS ---
+import { MyTipsSection } from "~/components/MyTipsSection"; 
+import { NextToJumpSummary } from "~/components/NextToJumpSummary"; 
 
+// --- TYPE DEFINITIONS (ALL EXPORTED) ---
+
+// Required for the loader's return type and the component's useLoaderData type
 export type RacedayHeaderData = {
-    raceday_id: number; // racecard_day.id
+    raceday_id: number;
     raceday_name: string;
     raceday_date: string;
     race_count: number;
@@ -14,27 +20,45 @@ export type RacedayHeaderData = {
     racetrack_locref: string;
 };
 
-// 💡 UPDATED TYPE: Added runner_form
+// Used for non-finished races to display the full race card
 export type RaceRunnerList = {
     runner_no: number;
     runner_name: string;
     runner_barrier: number | null;
     runner_jockey: string | null;
-    runner_weight: string | null; 
-    runner_form: string | null; // <-- ADDED
+    runner_weight: string | null;
+    runner_form: string | null; 
+    tipster_count?: number;
 }[];
 
-// 💡 NEW TYPE: Race result and odds data from racecard_race (UNCHANGED)
+// 💡 NEW TYPE: Defines a unique Sub Tip combination (Main Tip + Alt Tip)
+export type SubTipCombo = {
+    main_runner_no: number;
+    main_runner_name: string;
+    alt_runner_no: number;
+    alt_runner_name: string;
+};
+
+
+// Full race result including runner names and optional full runner list
+export type RaceResultDetail = RaceResultData & {
+    runner_1st_name: string | null;
+    runner_2nd_name: string | null;
+    runner_3rd_name: string | null;
+    runner_4th_name: string | null;
+    allRunners?: RaceRunnerList; 
+    uniqueSubTips?: SubTipCombo[]; // <--- NEW FIELD
+};
+
+// ... (RaceResultData, RunnerDetail, TipDetail types remain unchanged) ...
 export type RaceResultData = {
-    race_id: number; // racecard_race.id
+    race_id: number;
     race_no: number;
     race_notes: string;
-    // Results - runner_no references
     race_1st: number | null;
     race_2nd: number | null;
     race_3rd: number | null;
     race_4th: number | null;
-    // Odds (numeric from DB, handled as number in TS)
     race_1st_wodds: number | null;
     race_1st_podds: number | null;
     race_2nd_podds: number | null;
@@ -42,7 +66,7 @@ export type RaceResultData = {
 };
 
 export type RunnerDetail = {
-    runner_no: number; // Added runner_no here for easier mapping
+    runner_no: number; 
     runner_name: string;
     runner_jockey: string;
 } | null;
@@ -55,24 +79,14 @@ export type TipDetail = {
     tip_alt_details: RunnerDetail;
 };
 
-// 💡 UPDATED TYPE: Add result details for the top 4 and the full runner list
-export type RaceResultDetail = RaceResultData & {
-    runner_1st_name: string | null;
-    runner_2nd_name: string | null;
-    runner_3rd_name: string | null;
-    runner_4th_name: string | null;
-    // 💡 NEW FIELD: Full runner list for non-result races
-    allRunners?: RaceRunnerList; 
-};
-
-// 💡 UPDATED TYPE: Change 'races' to 'raceResults' to reflect new structure
+// The combined shape of all data returned by the loader
 export type RacedayTipsData = {
     racedayHeader: RacedayHeaderData;
     userTips: TipDetail[];
-    raceResults: RaceResultDetail[]; // Now contains full details
+    raceResults: RaceResultDetail[];
 };
 
-// --- LOADER FUNCTION: FETCHING RACEDAY DETAILS, RACES, AND USER TIPS ---
+// --- LOADER FUNCTION: FETCHING RACEDAY DETAILS, RACES, AND USER TIPS (MODIFIED) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const { supabaseClient } = createSupabaseServerClient(request);
 
@@ -106,7 +120,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const tipsterId = profile.tipster_id;
 
 
-    // 3. Get Raceday Header Data & All Race Details (UNCHANGED SELECT)
+    // 3. Get Raceday Header Data & All Race Details (UNCHANGED)
     const { data: compRacedayData, error: racedayError } = await supabaseClient
         .from("comp_raceday")
         .select(
@@ -155,7 +169,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         racetrack_locref: day.racetrack?.track_locref ?? 'N/A',
     };
 
-    // Process all races to extract details, results, and odds
+    // Process all races to extract details, results, and odds (UNCHANGED)
     const rawRaces = day.racecard_race || [];
 
     const raceData: RaceResultData[] = rawRaces
@@ -177,61 +191,153 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         }))
         .sort((a, b) => a.race_no - b.race_no); // Ensure races are sorted
 
-    // Prepare a map of Race No. to Racecard_Race ID
+    // Prepare a map of Race No. to Racecard_Race ID (UNCHANGED)
     const raceIdMap = new Map<number, number>();
     raceData.forEach(race => {
         raceIdMap.set(race.race_no, race.race_id);
     });
+    
+    // 4. Fetch all tips for the competition on this raceday and aggregate/extract
+    const { data: allCompTipsRaw, error: allCompTipsError } = await supabaseClient
+        .from("tipster_tips_header")
+        .select(
+            `
+            tipster_tips_detail (
+                race_no,
+                tip_main,
+                tip_alt
+            )
+            `
+        )
+        .eq("comp_raceday", numericCompRacedayId);
+        
+    // tipCountMap: Map<RaceNo, Map<RunnerNo, Count>> (for consensus count)
+    const tipCountMap = new Map<number, Map<number, number>>(); 
+    
+    // 💡 NEW MAP: Stores unique (tip_main, tip_alt) combinations
+    // uniqueSubTipsMap: Map<RaceNo, Set<string of "tip_main,tip_alt">>
+    const uniqueSubTipsMap = new Map<number, Set<string>>();
 
-    // 💡 MODIFIED LOGIC: Fetch runner names for all placed horses AND all runners for non-result races
+
+    if (allCompTipsRaw && !allCompTipsError) {
+        for (const header of allCompTipsRaw) {
+            if (header.tipster_tips_detail) {
+                for (const tip of header.tipster_tips_detail) {
+                    const raceNo = tip.race_no;
+                    
+                    if (!tipCountMap.has(raceNo)) {
+                        tipCountMap.set(raceNo, new Map<number, number>());
+                    }
+                    const raceMap = tipCountMap.get(raceNo)!;
+
+                    // 1. Consensus Count Logic (Prioritizing tip_alt)
+                    const runnerToCount = tip.tip_alt || tip.tip_main;
+                    if (runnerToCount) {
+                        raceMap.set(runnerToCount, (raceMap.get(runnerToCount) || 0) + 1);
+                    }
+
+                    // 2. Unique Sub Tip Extraction Logic
+                    // Only consider a 'Sub' if both main and alt tips exist
+                    if (tip.tip_main && tip.tip_alt) {
+                        if (!uniqueSubTipsMap.has(raceNo)) {
+                            uniqueSubTipsMap.set(raceNo, new Set<string>());
+                        }
+                        // Store the unique combination as a string key: "main,alt"
+                        const comboKey = `${tip.tip_main},${tip.tip_alt}`;
+                        uniqueSubTipsMap.get(raceNo)!.add(comboKey);
+                    }
+                }
+            }
+        }
+    }
+
+
+    // 5. Build Race Results (MODIFIED to include uniqueSubTips)
     const raceResults: RaceResultDetail[] = await Promise.all(
         raceData.map(async (race) => {
             const hasFinished = race.race_1st !== null;
             let raceRunners: RaceRunnerList | undefined = undefined;
-            
+            let uniqueSubTips: SubTipCombo[] | undefined = undefined; // Init the new field
+
             if (!hasFinished) {
-                // Case 1: Race has NOT finished (FETCH ALL RUNNERS with updated fields)
+                // Case 1: Race has NOT finished (FETCH ALL RUNNERS, ADD TIP COUNT, and GET UNIQUE SUB TIPS)
+                
+                // --- A. Fetch Runners and Add Tip Count (UNCHANGED) ---
                 const { data: allRunnersData, error: allRunnersError } = await supabaseClient
                     .from("racecard_runner")
-                    // 🛠️ UPDATED SELECT: Added runner_form
                     .select("runner_no, runner_name, runner_barrier, runner_jockey, runner_weight, runner_form") 
                     .eq("racecard_race", race.race_id)
-                    .order("runner_no", { ascending: true }); // Order by number
+                    .order("runner_no", { ascending: true });
 
-                if (allRunnersError) {
-                    console.error(`Error fetching all runners for Race ${race.race_no}:`, allRunnersError);
-                } else if (allRunnersData) {
-                    raceRunners = allRunnersData.map(r => {
-                        // 🛠️ UPDATED: Keep runner_weight as raw string/text
-                        const rawWeight = r.runner_weight ? String(r.runner_weight) : null;
-
-                        return {
-                            runner_no: Number(r.runner_no),
-                            runner_name: r.runner_name || 'Name N/A',
-                            runner_barrier: r.runner_barrier ? Number(r.runner_barrier) : null,
-                            runner_jockey: r.runner_jockey || null,
-                            runner_weight: rawWeight, // Use the raw weight string
-                            runner_form: r.runner_form || null, // <-- ADDED
-                        };
-                    });
+                if (allRunnersData) {
+                    const raceTips = tipCountMap.get(race.race_no) || new Map<number, number>();
+                    raceRunners = allRunnersData.map(r => ({
+                        runner_no: Number(r.runner_no),
+                        runner_name: r.runner_name || 'Name N/A',
+                        runner_barrier: r.runner_barrier ? Number(r.runner_barrier) : null,
+                        runner_jockey: r.runner_jockey || null,
+                        runner_weight: r.runner_weight ? String(r.runner_weight) : null,
+                        runner_form: r.runner_form || null, 
+                        tipster_count: raceTips.get(Number(r.runner_no)) || 0,
+                    }));
                 }
                 
-                // Return early for non-finished race, only need allRunners
+                // --- B. Resolve Unique Sub Tips (NEW LOGIC) ---
+                const subComboSet = uniqueSubTipsMap.get(race.race_no);
+                
+                if (subComboSet && subComboSet.size > 0) {
+                    const uniqueRunnerNos = new Set<number>();
+                    const combosToResolve: { main: number, alt: number }[] = [];
+                    
+                    for (const comboKey of subComboSet) {
+                        const [mainStr, altStr] = comboKey.split(',');
+                        const main = Number(mainStr);
+                        const alt = Number(altStr);
+                        
+                        uniqueRunnerNos.add(main);
+                        uniqueRunnerNos.add(alt);
+                        combosToResolve.push({ main, alt });
+                    }
+
+                    // Fetch runner names for all unique runners involved in a sub
+                    const { data: subRunnersData, error: subRunnersError } = await supabaseClient
+                        .from("racecard_runner")
+                        .select("runner_no, runner_name")
+                        .eq("racecard_race", race.race_id)
+                        .in("runner_no", Array.from(uniqueRunnerNos));
+                        
+                    if (subRunnersError) {
+                        console.error(`Error fetching sub runner names for Race ${race.race_no}:`, subRunnersError);
+                    } else if (subRunnersData) {
+                        const runnerNameMap = new Map<number, string>();
+                        subRunnersData.forEach(r => runnerNameMap.set(Number(r.runner_no), r.runner_name || 'N/A'));
+                        
+                        uniqueSubTips = combosToResolve.map(combo => ({
+                            main_runner_no: combo.main,
+                            main_runner_name: runnerNameMap.get(combo.main) || `Runner ${combo.main} N/A`,
+                            alt_runner_no: combo.alt,
+                            alt_runner_name: runnerNameMap.get(combo.alt) || `Runner ${combo.alt} N/A`,
+                        }));
+                    }
+                }
+
+                
+                // Return early for non-finished race, including new data
                 return { 
                     ...race, 
                     runner_1st_name: null, 
                     runner_2nd_name: null, 
                     runner_3rd_name: null, 
                     runner_4th_name: null,
-                    allRunners: raceRunners // Include the full list
+                    allRunners: raceRunners,
+                    uniqueSubTips: uniqueSubTips, // <--- ATTACHED HERE
                 };
             }
             
-            // Case 2: Race HAS finished (FETCH PLACED RUNNER NAMES - Existing Logic)
+            // Case 2: Race HAS finished (UNCHANGED)
             const runnerNos = [race.race_1st, race.race_2nd, race.race_3rd, race.race_4th].filter((n): n is number => n !== null);
             
             if (runnerNos.length === 0) {
-                // If results are null/zeroed, return with null names
                  return { 
                     ...race, 
                     runner_1st_name: null, 
@@ -240,7 +346,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                     runner_4th_name: null 
                 };
             }
-
+            
+            // ... (Rest of fetching placed runner names logic remains unchanged)
             const { data: runners, error: runnerError } = await supabaseClient
                 .from("racecard_runner")
                 .select("runner_no, runner_name")
@@ -263,7 +370,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 runnerMap.set(Number(r.runner_no), r.runner_name || 'Name N/A');
             });
 
-            // Map runner numbers to names
             const getRunnerName = (runnerNo: number | null) => runnerNo ? runnerMap.get(runnerNo) ?? null : null;
 
             return {
@@ -272,13 +378,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 runner_2nd_name: getRunnerName(race.race_2nd),
                 runner_3rd_name: getRunnerName(race.race_3rd),
                 runner_4th_name: getRunnerName(race.race_4th),
-                // allRunners remains undefined here, which is fine
             };
         })
     );
 
 
-    // 4. Fetch current user's tips (UNCHANGED)
+    // 6. Fetch current user's tips (UNCHANGED)
+    // ... (logic remains unchanged) ...
     const { data: userTipsRaw, error: tipsError } = await supabaseClient
         .from("tipster_tips_header")
         .select(
@@ -306,7 +412,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     userTipsRawData.sort((a, b) => a.race_no - b.race_no);
 
-    // 5. Fetch Runner Details for all tips (UNCHANGED logic)
+    // 7. Fetch Runner Details for all tips (UNCHANGED)
     const tipsWithDetails: TipDetail[] = await Promise.all(userTipsRawData.map(async (tip) => {
         const racecardRaceId = raceIdMap.get(Number(tip.race_no));
 
@@ -344,12 +450,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }));
 
 
-    // 6. Return all data, using raceResults
+    // 8. Return all data
     return json({ racedayHeader, userTips: tipsWithDetails, raceResults } as RacedayTipsData);
 };
 
+{/*---------------------------------------------------------------------------------------------*/}
+// --- REACT COMPONENT: DISPLAYING DATA
+{/*---------------------------------------------------------------------------------------------*/}
 
-// --- REACT COMPONENT: DISPLAYING DATA ---
+// --- REACT COMPONENT: DISPLAYING DATA (UNCHANGED FROM LAST STEP) ---
 export default function RacedayDetail() {
     const { racedayHeader, userTips, raceResults } = useLoaderData<typeof loader>();
 
@@ -454,8 +563,9 @@ export default function RacedayDetail() {
 
     return (
         <div className="p-8 max-w-xl mx-auto lg:max-w-7xl">
-
+{/*---------------------------------------------------------------------------------------------*/}
             {/* --- RACEDAY HEADER (UNCHANGED) --- */}
+{/*---------------------------------------------------------------------------------------------*/}
             <div className="mb-8 border-b pb-4">
                 <p className="text-xl font-heading font-extrabold text-gray-800">
                     {racedayHeader.raceday_name} ({racedayHeader.racetrack_locref})
@@ -466,14 +576,41 @@ export default function RacedayDetail() {
             </div>
             {/* ------------------------------------------------------------------ */}
 
-            {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
 
-            <div className="flex items-center space-x-3 mb-4 mt-10">
+{/*---------------------------------------------------------------------------------------------*/}
+            {/* 🚀 NextToJumpSummary (UNCHANGED) */}
+{/*---------------------------------------------------------------------------------------------*/}
+            <NextToJumpSummary
+                racedayHeader={racedayHeader}
+                raceResults={raceResults}
+                nextToJumpIndex={nextToJumpIndex}
+            />
+
+
+
+
+
+{/*---------------------------------------------------------------------------------------------*/}
+            {/* --- USER TIPS SECTION (NEW COMPONENT) --- */}
+{/*---------------------------------------------------------------------------------------------*/}            
+            <MyTipsSection userTips={userTips} />
+
+
+
+
+
+
+
+
+{/*---------------------------------------------------------------------------------------------*/}
+            {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
+{/*---------------------------------------------------------------------------------------------*/}
+            <div className="flex items-center space-x-3 mb-4">
                 <span className="material-symbols-outlined text-3xl text-gray-800">
                     sports_score
                 </span>
 
-                <h2 className="text-2xl font-heading font-semibold text-gray-800">
+                <h2 className="2xl font-heading font-semibold text-gray-800">
                     Racecard
                 </h2>
                 <span className="flex items-center justify-center h-8 w-8 rounded-full bg-indigo-500 text-white text-base font-bold shadow-md flex-shrink-0">
@@ -566,28 +703,29 @@ export default function RacedayDetail() {
 
                                     </div>
                                 ) : (
-                                    // **2. DISPLAY FULL RUNNER LIST (UPDATED)**
+                                    // **2. DISPLAY FULL RUNNER LIST (COLUMN ORDER SWAPPED)**
                                     <div className="pt-1">
                                         
-                                        {/* 🛠️ UPDATED Column Labels: 3 (No. Form) + 5 (Runner/Weight) + 4 (Jockey) */}
-                                        {/*
-                                        {/*<div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-500 border-b pb-1 mb-1">
-                                        {/*    {/* NEW COLUMN: No. + Form (col-span-3) */}
-                                        {/*    <div className="col-span-3">No. Form</div> 
-                                        {/*   
-                                        {/*    {/* ADJUSTED COLUMN SPAN: Runner/Weight (col-span-5) */}
-                                        {/*    <div className="col-span-5">Runner (Barrier) Weight</div>
-                                        {/*   
-                                        {/*    {/* JOCKEY - (col-span-4), right-justified */}
-                                        {/*    <div className="col-span-4 text-right">Jockey</div>
-                                        {/*</div>
-                                        */}
-
+                                        {/* 🛠️ UPDATED Column Labels: TIPS MOVED TO END */}
+                                        <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-500 border-b pb-1 mb-1">
+                                            {/* 1. No. Form */}
+                                            <div className="col-span-2">No. Form</div> 
+                                            
+                                            {/* 2. Runner (Bar) Weight */}
+                                            <div className="col-span-4 pl-1">Runner (Bar) Weight</div>
+                                            
+                                            {/* 3. JOCKEY (NOW IN THIRD SPOT) */}
+                                            <div className="col-span-4 text-right">Jockey</div>
+                                            
+                                            {/* 4. TIPS (NOW IN LAST SPOT) */}
+                                            <div className="col-span-2 text-center">Tips</div>
+                                        </div>
+                                    
                                         <div className="space-y-1"> 
                                             {race.allRunners?.map((runner) => (
                                                 <div key={runner.runner_no} className="grid grid-cols-12 items-center text-sm border-b border-gray-100 last:border-b-0 py-0.5">
                                                     
-                                                    {/* 1. RUNNER NO. + FORM - col-span-3. Left aligned block */}
+                                                    {/* 1. RUNNER NO. + FORM - col-span-2 */}
                                                     <div className="col-span-2 font-medium text-gray-800 pr-1">
                                                         {/* Runner No. (Prominent) */}
                                                         <span className="font-extrabold text-indigo-600 mr-1 text-sm">
@@ -600,8 +738,8 @@ export default function RacedayDetail() {
                                                         </span>
                                                     </div>
 
-                                                    {/* 2. RUNNER NAME + BARRIER + WEIGHT - col-span-5 */}
-                                                    <div className="col-span-6 font-medium text-gray-800 truncate pl-1 pr-2">
+                                                    {/* 2. RUNNER NAME + BARRIER + WEIGHT - col-span-4 */}
+                                                    <div className="col-span-4 font-medium text-gray-800 truncate pl-1 pr-2">
                                                         
                                                         {/* Runner Name */}
                                                         {runner.runner_name} 
@@ -617,9 +755,16 @@ export default function RacedayDetail() {
                                                         </span>
                                                     </div>
                                                     
-                                                    {/* 3. JOCKEY - 4/12 (Final Column) - Right-justified, smaller text (UNCHANGED) */}
+                                                    {/* 3. JOCKEY - col-span-4 (MOVED HERE) */}
                                                     <div className="col-span-4 text-gray-700 text-xs truncate text-right pr-1">
                                                         {runner.runner_jockey || 'N/A'}
+                                                    </div>
+
+                                                    {/* 4. TIPSTER COUNT - col-span-2 (MOVED TO END) */}
+                                                    <div className="col-span-2 text-center">
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${runner.tipster_count && runner.tipster_count > 0 ? 'bg-indigo-100 text-indigo-700' : 'text-gray-300'}`}>
+                                                            {runner.tipster_count || 0}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -639,73 +784,6 @@ export default function RacedayDetail() {
                     );
                 })}
             </ul>
-
-            {/* --- USER TIPS SECTION (UNCHANGED) --- */}
-            
-            <div className="flex items-center space-x-3 mb-4 mt-10">
-                <span className="material-symbols-outlined text-3xl text-gray-800">
-                    Checkbook
-                </span>
-
-                <h2 className="text-2xl font-heading font-semibold text-gray-800">
-                    My Tips
-                </h2>
-                <span className="flex items-center justify-center h-8 w-8 rounded-full bg-green-500 text-white text-base font-bold shadow-md flex-shrink-0">
-                    {userTips.length}
-                </span>
-            </div>
-
-            {userTips.length === 0 ? (
-                <p className="text-gray-500 italic font-body mb-8 p-4 bg-gray-50 rounded-lg">
-                    You have not submitted any tips for this raceday yet.
-                </p>
-            ) : (
-                <div className="mb-10 shadow-lg rounded-lg border border-gray-100 overflow-hidden">
-                    
-                    {/* Table Header - Now 2 columns (RACE: 2/12, SELECTION: 10/12) */}
-                    <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-500 bg-gray-50 p-3 border-b border-gray-100">
-                        <div className="col-span-2 text-left">RACE</div>
-                        <div className="col-span-10 text-left">SELECTION</div>
-                    </div>
-
-                    {/* Tip Rows */}
-                    {userTips.map((tip, index) => {
-                        
-                        // Main Runner details
-                        const mainRunnerNo = tip.tip_main;
-                        const mainRunnerName = tip.tip_main_details?.runner_name || 'Name N/A';
-                        
-                        // Start with the main tip display
-                        let combinedRunnerDisplay = `${mainRunnerNo}. ${mainRunnerName}`;
-                        
-                        // Alt Runner (SUB) details
-                        const altRunnerNo = tip.tip_alt;
-                        const altRunnerName = tip.tip_alt_details?.runner_name || 'Name N/A';
-                        
-                        // 💡 NEW LOGIC: Append SUB tip if it exists
-                        if (altRunnerNo) {
-                            combinedRunnerDisplay += ` > SUB: ${altRunnerNo}. ${altRunnerName}`;
-                        }
-
-                        return (
-                            <div
-                                key={index}
-                                className="grid grid-cols-12 items-center text-sm p-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-100"
-                            >
-                                {/* 1. RACE - 2/12 width */}
-                                <div className="col-span-2 text-lg font-extrabold text-indigo-600">
-                                    {tip.race_no}
-                                </div>
-                                
-                                {/* 2. RUNNER (Combined Tip) - 10/12 width */}
-                                <div className="col-span-10 text-gray-800 font-medium truncate">
-                                    {combinedRunnerDisplay}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
         </div>
     );
 }
