@@ -11,7 +11,7 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
     return (
         <div className="w-full">
             
-            <div className="flex items-center space-x-3 p-4 bg-gradient-customalt text-white rounded-t-2xl">
+            <div className="flex items-center space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
                 <span className="material-symbols-outlined text-3xl">
                     Checkbook
                 </span>
@@ -23,11 +23,11 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
             </div>
 
             {userTips.length === 0 ? (
-                <p className="text-gray-500 italic font-body mb-8 p-4 bg-gray-50 rounded-b-2xl border border-gray-100 border-t-0 shadow-lg">
+                <p className="text-greymain italic font-body mb-8 p-4 bg-gray-50 rounded-b-2xl border border-gray-100 border-t-0 shadow-lg">
                     You have not submitted any tips for this raceday yet.
                 </p>
             ) : (
-                <div className="divide-y divide-gray-200 mb-10  border border-gray-100 border-t-0 rounded-b-2xl overflow-hidden shadow-lg pb-4">
+                <div className="divide-y divide-greymain mb-10  border border-gray-100 border-t-0 rounded-b-2xl overflow-hidden shadow-lg pb-4">
                     
                     {/* Table Header - Now 2 columns (RACE: 2/12, SELECTION: 10/12) */}
                     <div className="grid grid-cols-12 text-xs font-bold uppercase tracking-wider text-blackmain p-3 bg-mainlight">

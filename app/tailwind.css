@@ -142,6 +142,8 @@
   --color-alt: #1c1962;
   --color-altlight: #4843d6;
 
+  --color-grey-main: #6e7174;
+
   --color-main-dark: #336E5B;
   --color-main-medium: #23875D;
   --color-main-light: #F3F5F7;
@@ -192,6 +194,10 @@
 
   .text-alert {
     color: var(--color-alert);
+  }
+
+  .text-greymain {
+    color: var( --color-grey-main);
   }
 
   .text-cardtitle {
@@ -261,6 +267,14 @@
 
   .bg-second {
     background-color: var(--color-bgsecond);
+  }
+
+  .bg-alt {
+    background-color: var(--color-alt);
+  }
+
+  .bg-greymain {
+    background-color: var(--color-grey-main);
   }
 
   .bg-mainlight {

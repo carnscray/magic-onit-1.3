@@ -20,7 +20,7 @@ export function Footer() {
             type="submit"
             disabled={isSigningOut}
             // Custom styling for a transparent, text-only button
-            className="flex items-center space-x-1 p-2 text-white hover:text-red-100 transition duration-150"
+            className="flex items-center space-x-1 p-2 text-white hover:text-second transition duration-150"
           >
             {/* White power_settings_circle icon */}
             <span 

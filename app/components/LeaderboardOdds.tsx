@@ -86,7 +86,7 @@ const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData, curr
         setVisibleRows(prevVisibleRows => prevVisibleRows + ROWS_PER_LOAD);
     };
     
-    const staticRankBadgeClasses = "inline-flex items-center justify-center font-bold h-8 px-3 text-lg text-gray-800";
+    const staticRankBadgeClasses = "inline-flex items-center justify-center font-bold h-8 px-3 text-lg text-main";
 
 
     return (
@@ -114,11 +114,11 @@ const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData, curr
                         {/* GRID HEADER: Column spans: 2, 8, 2 */}
                         <div className="grid grid-cols-12 text-xs font-bold uppercase tracking-wider text-blackmain p-1 bg-mainlight">
                             {/* col-span-2: Rank */}
-                            <div className="col-span-2 pl-3 py-2">Rank</div> 
+                            <div className="col-span-2 pl-4 py-2">Rank</div> 
                             {/* col-span-8: Tipster */}
                             <div className="col-span-8 py-2">Tipster</div>
                             {/* col-span-2: Odds */}
-                            <div className="col-span-2 text-right pr-3 py-2">Odds</div>
+                            <div className="col-span-2 text-right pr-5 py-2">Odds</div>
                         </div>
 
                         {/* 🛑 TIPSTER ROWS: Map over dataToDisplay */}
@@ -170,7 +170,7 @@ const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData, curr
                                     </div>
                                     
                                     {/* 3. Odds Total Column (col-span-2) */}
-                                    <div className="col-span-2 text-sm font-bold text-right -mr-1">
+                                    <div className="col-span-2 text-sm font-bold text-right pr-3">
                                         <span className={`text-lg font-heading ${oddsColorClass}`}>
                                             {formatCurrency(row.odds_total_return)}
                                         </span>
