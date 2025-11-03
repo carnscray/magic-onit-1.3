@@ -8,9 +8,9 @@ const LeaderboardOdds = () => (
     <div className="shadow-lg rounded-2xl overflow-hidden">
         
         {/* 🛑 MODIFIED: Header now matches MyTipsSection: bg-main, text-white, rounded-t-2xl */}
-        <div className="flex items-center space-x-3 p-4 bg-main text-white rounded-t-2xl">
+        <div className="flex items-center space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
             <span className="material-symbols-outlined text-3xl">
-                Checkbook
+                Trophy
             </span>
 
             <h2 className="text-2xl font-heading font-semibold">

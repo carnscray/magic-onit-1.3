@@ -14,7 +14,7 @@ export default function Footer() {
     // 2. Added 'rounded-tl-xl rounded-tr-xl' to give the footer curves that match the <main> element.
     // 3. Removed 'shadow-lg' as it might interfere with the layering illusion.
     <footer className="w-full bg-gradient-custom mt-auto rounded-tl-3xl rounded-tr-3xl"> 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-start items-center h-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-start items-center h-16">
         
         {/* Logout Form/Button */}
         <Form action="/auth-sign-out" method="POST">

@@ -62,41 +62,45 @@ export function NextToJumpSummary({
         // 🛑 MODIFIED: New wrapper for consistent shadow/border
         <div className="shadow-lg rounded-2xl overflow-hidden">
             
-            {/* 🛑 MODIFIED: Header matching MyTipsSection: bg-main, text-white, rounded-t-2xl */}
-            <div className="flex items-center space-x-3 p-4 bg-main text-white rounded-t-2xl">
-                <span className="material-symbols-outlined text-3xl">
-                    schedule
-                </span>
 
+            <div className="flex items-center justify-between p-4 bg-gradient-custom text-white rounded-t-2xl">
+                
+                {/* Left side: Icon and Heading */}
+                <div className="flex items-center space-x-3">
+                    <span className="material-symbols-outlined text-3xl">
+                        schedule
+                    </span>
+
+                    <h2 className="text-2xl font-heading font-semibold">
+                        Next To Jump
+                    </h2>
+                </div>
+                
+                {/* Right side: Race Number */}
                 <h2 className="text-2xl font-heading font-semibold">
-                    Next To Jump
+                    Race {nextRace.race_no}
                 </h2>
             </div>
 
             {/* Content Container */}
-            <div className="p-4 bg-white rounded-b-2xl border border-gray-100 border-t-0">
+            <div className=" bg-white rounded-b-2xl border border-gray-100 border-t-0 pb-8">
                 
-                {/* 🛑 MODIFIED: New Race Detail Layout (Race # left, Track right) */}
-                <div className="flex items-center justify-between pb-3  ">
-                    <h3 className="text-2xl font-heading font-extrabold text-main">
-                        Race {nextRace.race_no}
-                    </h3>
-                    <p className="text-md font-body font-semibold text-blackmain text-right">
-                        {racedayHeader.racetrack_name} ({racedayHeader.racetrack_locref})
+                {/* 🛑 MODIFIED: Full-width Race Details Bar */}
+                {/* Added bg-second and used -mx-4 to go edge-to-edge. Changed internal padding. */}
+                <div className="flex items-center justify-between bg-mainlight -mx-4 px-4 py-3">
+
+                <p className="text-sm font-body text-blackmain text-left whitespace-nowrap overflow-hidden text-ellipsis pl-4 pr-4">
+                        {raceNotes}
                     </p>
                 </div>
-                
-                {/* Race Notes */}
-                <p className="text-sm font-body text-mainblack italic py-1 border-t border-b border-gray-200">
-                    {raceNotes}
-                </p>
+
                 
                 {/* --- TIPSTER MARKET CONSENSUS SECTION --- */}
                 {runners.length > 0 && (
                     // 🛑 MODIFIED: border-red-200 changed to border-gray-200
                     <div className="mt-0 pt-4 ">
                         {/* 🛑 MODIFIED: Title/Icon color changed to text-main */}
-                        <h4 className="text-md font-heading font-bold text-main mb-2 flex items-center space-x-1">
+                        <h4 className="text-md font-heading font-bold text-main mb-2 flex items-center space-x-1 pl-4">
                             <span className="material-symbols-outlined text-main text-xl">
                                 bar_chart
                             </span>
@@ -113,7 +117,7 @@ export function NextToJumpSummary({
                                 const tipPercentage = maxTipCount > 0 ? (tipCount / maxTipCount) * 100 : 0;
                                 
                                 return (
-                                    <div key={runner.runner_no} className="flex items-center text-sm">
+                                    <div key={runner.runner_no} className="flex items-center text-sm pl-4 pr-6 ">
                                         {/* Runner Name/No Column */}
                                         <div className="w-8/12 flex items-center pr-2">
                                             {/* 🛑 MODIFIED: Runner No color changed to text-main */}

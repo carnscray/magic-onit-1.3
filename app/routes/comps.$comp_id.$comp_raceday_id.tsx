@@ -568,7 +568,7 @@ export default function RacedayDetail() {
 {/*---------------------------------------------------------------------------------------------*/}
             {/* --- RACEDAY HEADER (UNCHANGED) --- */}
 {/*---------------------------------------------------------------------------------------------*/}
-            <div className="mb-8 border-b pb-4">
+            <div className="mb-8 border-b p-4">
                 <p className="text-xl font-heading font-extrabold text-gray-800">
                     {racedayHeader.raceday_name} ({racedayHeader.racetrack_locref})
                 </p>
@@ -581,7 +581,7 @@ export default function RacedayDetail() {
 {/*---------------------------------------------------------------------------------------------*/}
             {/* 🛑 NEW: Responsive 3-Column Container */}
 {/*---------------------------------------------------------------------------------------------*/} 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-3">
 
                 {/* 🚀 NextToJumpSummary */}
                 <NextToJumpSummary
@@ -615,12 +615,13 @@ export default function RacedayDetail() {
             {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
 {/*---------------------------------------------------------------------------------------------*/}
             {/* 🛑 MODIFIED: Header matching MyTipsSection: bg-main, text-white, rounded-t-2xl. Used justify-between to push the badge to the right. */}
-            <div className="flex items-center justify-between p-4 bg-main text-white rounded-t-2xl mt-10">
+            <div className="flex items-center justify-between p-4 bg-gradient-custom text-white rounded-t-2xl mt-10">
                 
                 {/* Left side: Icon and Heading */}
                 <div className="flex items-center space-x-3">
                     <span className="material-symbols-outlined text-3xl">
-                        sports_score
+                        List_Alt
+
                     </span>
 
                     <h2 className="text-2xl font-heading font-semibold">
