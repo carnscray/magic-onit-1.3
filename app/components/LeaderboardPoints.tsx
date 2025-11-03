@@ -8,8 +8,8 @@ interface LeaderboardPointsProps {
 }
 
 // Number of rows to display initially and add per 'Load More' click
-const INITIAL_ROWS = 10;
-const ROWS_PER_LOAD = 20;
+const INITIAL_ROWS = 6;
+const ROWS_PER_LOAD = 10;
 
 /**
  * Helper function to convert a number to its ordinal string (e.g., 1 -> 1st, 2 -> 2nd, 11 -> 11th).

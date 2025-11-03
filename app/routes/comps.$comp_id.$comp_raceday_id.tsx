@@ -27,7 +27,7 @@ export type RacedayHeaderData = {
     comp_id: number;
 };
 
-// Used for non-finished races to display the full race card
+// Used for non-finished races to display the full race card (UNCHANGED)
 export type RaceRunnerList = {
     runner_no: number;
     runner_name: string;
@@ -38,7 +38,7 @@ export type RaceRunnerList = {
     tipster_count?: number;
 }[];
 
-// Defines a unique Sub Tip combination (Main Tip + Alt Tip)
+// Defines a unique Sub Tip combination (Main Tip + Alt Tip) (UNCHANGED)
 export type SubTipCombo = {
     main_runner_no: number;
     main_runner_name: string;
@@ -47,7 +47,7 @@ export type SubTipCombo = {
 };
 
 
-// Full race result including runner names and optional full runner list
+// Full race result including runner names and optional full runner list (UNCHANGED)
 export type RaceResultDetail = RaceResultData & {
     runner_1st_name: string | null;
     runner_2nd_name: string | null;
@@ -57,7 +57,7 @@ export type RaceResultDetail = RaceResultData & {
     uniqueSubTips?: SubTipCombo[];
 };
 
-// Core race result data
+// Core race result data (UNCHANGED)
 export type RaceResultData = {
     race_id: number;
     race_no: number;
@@ -86,14 +86,16 @@ export type TipDetail = {
     tip_alt_details: RunnerDetail;
 };
 
-// 🛑 NEW TYPE: Defines the shape of a single leaderboard row (Points Focus)
-export type TipsterLeaderboardRow = {
+// 🛑 REPLACED TipsterLeaderboardRow with the unified type
+// Defines the shape of a single leaderboard entry, including both points and odds
+export type TipsterLeaderboardEntry = {
     tipster_id: number;
     tipster_nickname: string;
     tipster_fullname: string;
     tipster_slogan: string | null;
     tipster_mainpic: string | null;
-    points_total: number;
+    points_total: number;       // From points calculation
+    odds_total_return: number;  // From odds calculation (NEW)
 };
 
 
@@ -104,8 +106,8 @@ export type RacedayTipsData = {
     raceResults: RaceResultDetail[];
     tipsterNickname: string | null; 
     compName: string;
-    // 🛑 ADDED: Leaderboard Data
-    pointsLeaderboard: TipsterLeaderboardRow[];
+    // 🛑 UPDATED: Single unified leaderboard list
+    leaderboard: TipsterLeaderboardEntry[]; 
 };
 
 
@@ -239,7 +241,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         raceIdMap.set(race.race_no, race.race_id);
     });
     
-    // 4. Fetch all tips for the competition on this raceday and aggregate/extract
+    // 4. Fetch all tips for the competition on this raceday and aggregate/extract (UNCHANGED)
     const { data: allCompTipsRaw, error: allCompTipsError } = await supabaseClient
         .from("tipster_tips_header")
         .select(
@@ -490,20 +492,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }));
 
 
-    // 🛑 NEW: 8. Fetch Leaderboard Data using the simplified RPC
-    const { data: leaderboardData, error: leaderboardError } = await supabaseClient
+    // 🛑 NEW: 8. Fetch Leaderboard Data using the unified RPC and type
+    const { data: combinedLeaderboardData, error: combinedLeaderboardError } = await supabaseClient
         .rpc("get_comp_raceday_leaderboard", {
             comp_raceday_id_in: numericCompRacedayId,
         })
-        .returns<TipsterLeaderboardRow[]>(); 
+        .returns<TipsterLeaderboardEntry[]>(); // Use the unified type
 
-    let pointsLeaderboard: TipsterLeaderboardRow[] = [];
-    if (leaderboardError) {
-        console.error("Error fetching leaderboard data:", leaderboardError);
-        // pointsLeaderboard remains []
+    // 🛑 UPDATED variable name to 'leaderboard'
+    let leaderboard: TipsterLeaderboardEntry[] = [];
+    if (combinedLeaderboardError) {
+        console.error("Error fetching combined leaderboard data:", combinedLeaderboardError);
+        // leaderboard remains []
     } else {
         // Use the fetched data, ensuring it is an array
-        pointsLeaderboard = leaderboardData || [];
+        leaderboard = combinedLeaderboardData || [];
     }
     
     // 9. Return all data (MODIFIED)
@@ -513,14 +516,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         raceResults, 
         tipsterNickname, 
         compName, 
-        pointsLeaderboard // <<-- ADDED
+        leaderboard // 🛑 UPDATED: Single unified list
     } as RacedayTipsData);
 };
 
 // --- REACT COMPONENT: DISPLAYING DATA (UPDATED LAYOUT)
 export default function RacedayDetail() {
-    // 🛑 DESTRUCTURED: pointsLeaderboard is now available
-    const { racedayHeader, userTips, raceResults, tipsterNickname, compName, pointsLeaderboard } = useLoaderData<typeof loader>();
+    // 🛑 UPDATED DESTRUCTURING: use the single 'leaderboard' list
+    const { racedayHeader, userTips, raceResults, tipsterNickname, compName, leaderboard } = useLoaderData<typeof loader>();
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-AU', {
@@ -598,11 +601,11 @@ export default function RacedayDetail() {
             {/* --- LEADERBOARDS (Grouped in 2 columns on large screen) --- */}
             <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 mt-8 lg:items-start">
 
-                {/* Leaderboard Points 🛑 PASSING NEW DATA */} 
-                <LeaderboardPoints leaderboardData={pointsLeaderboard} />
+                {/* Leaderboard Points 🛑 PASSING THE SINGLE LIST */} 
+                <LeaderboardPoints leaderboardData={leaderboard} />
 
-                {/* Leaderboard Odds */} 
-                <LeaderboardOdds />
+                {/* Leaderboard Odds 🛑 PASSING THE SINGLE LIST */} 
+                <LeaderboardOdds leaderboardData={leaderboard} />
 
             </div>
 
