@@ -14,7 +14,7 @@ import { Racecard } from "~/components/Racecard";
 import { TipsterHeader } from "../components/TipsterHeader"; 
 
 
-// --- TYPE DEFINITIONS (UPDATED) ---
+// --- TYPE DEFINITIONS (UNCHANGED) ---
 
 // Required for the loader's return type and the component's useLoaderData type
 export type RacedayHeaderData = {
@@ -86,8 +86,7 @@ export type TipDetail = {
     tip_alt_details: RunnerDetail;
 };
 
-// 🛑 REPLACED TipsterLeaderboardRow with the unified type
-// Defines the shape of a single leaderboard entry, including both points and odds
+// Defines the shape of a single leaderboard entry, including both points and odds (UNCHANGED)
 export type TipsterLeaderboardEntry = {
     tipster_id: number;
     tipster_nickname: string;
@@ -95,27 +94,26 @@ export type TipsterLeaderboardEntry = {
     tipster_slogan: string | null;
     tipster_mainpic: string | null;
     points_total: number;       // From points calculation
-    odds_total_return: number;  // From odds calculation (NEW)
+    odds_total_return: number;  // From odds calculation
 };
 
 
-// The combined shape of all data returned by the loader (MODIFIED)
+// The combined shape of all data returned by the loader (UNCHANGED)
 export type RacedayTipsData = {
     racedayHeader: RacedayHeaderData;
     userTips: TipDetail[];
     raceResults: RaceResultDetail[];
     tipsterNickname: string | null; 
     compName: string;
-    // 🛑 UPDATED: Single unified leaderboard list
     leaderboard: TipsterLeaderboardEntry[]; 
 };
 
 
-// --- LOADER FUNCTION: FETCHING RACEDAY DETAILS, RACES, AND USER TIPS (MODIFIED) ---
+// --- LOADER FUNCTION: FETCHING RACEDAY DETAILS, RACES, AND USER TIPS (UNCHANGED) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const { supabaseClient } = createSupabaseServerClient(request);
 
-    // 1. Auth check and parameter validation (UNCHANGED)
+    // 1. Auth check and parameter validation 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
     if (userError || !user) {
@@ -131,7 +129,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const numericCompRacedayId = Number(compRacedayId);
     const numericCompId = Number(compId);
 
-    // 2. Fetch the user's tipster ID AND NICKNAME (UNCHANGED)
+    // 2. Fetch the user's tipster ID AND NICKNAME 
     const { data: profile, error: profileError } = await supabaseClient
         .from("user_profiles")
         .select("tipster:tipster_id(id, tipster_nickname)")
@@ -163,7 +161,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
 
-    // 3. Get Raceday Header Data & All Race Details (UNCHANGED)
+    // 3. Get Raceday Header Data & All Race Details 
     const { data: compRacedayData, error: racedayError } = await supabaseClient
         .from("comp_raceday")
         .select(
@@ -213,7 +211,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         comp_id: numericCompId,
     };
 
-    // Process all races to extract details, results, and odds (UNCHANGED)
+    // Process all races to extract details, results, and odds 
     const rawRaces = day.racecard_race || [];
 
     const raceData: RaceResultData[] = rawRaces
@@ -235,13 +233,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         }))
         .sort((a, b) => a.race_no - b.race_no); // Ensure races are sorted
 
-    // Prepare a map of Race No. to Racecard_Race ID (UNCHANGED)
+    // Prepare a map of Race No. to Racecard_Race ID 
     const raceIdMap = new Map<number, number>();
     raceData.forEach(race => {
         raceIdMap.set(race.race_no, race.race_id);
     });
     
-    // 4. Fetch all tips for the competition on this raceday and aggregate/extract (UNCHANGED)
+    // 4. Fetch all tips for the competition on this raceday and aggregate/extract 
     const { data: allCompTipsRaw, error: allCompTipsError } = await supabaseClient
         .from("tipster_tips_header")
         .select(
@@ -295,7 +293,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
 
 
-    // 5. Build Race Results (UNCHANGED)
+    // 5. Build Race Results 
     const raceResults: RaceResultDetail[] = await Promise.all(
         raceData.map(async (race) => {
             const hasFinished = race.race_1st !== null;
@@ -305,7 +303,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
             if (!hasFinished) {
                 // Case 1: Race has NOT finished (FETCH ALL RUNNERS, ADD TIP COUNT, and GET UNIQUE SUB TIPS)
                 
-                // --- A. Fetch Runners and Add Tip Count (UNCHANGED) ---
+                // --- A. Fetch Runners and Add Tip Count ---
                 const { data: allRunnersData, error: allRunnersError } = await supabaseClient
                     .from("racecard_runner")
                     .select("runner_no, runner_name, runner_barrier, runner_jockey, runner_weight, runner_form") 
@@ -325,7 +323,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                     }));
                 }
                 
-                // --- B. Resolve Unique Sub Tips (UNCHANGED) ---
+                // --- B. Resolve Unique Sub Tips ---
                 const subComboSet = uniqueSubTipsMap.get(race.race_no);
                 
                 if (subComboSet && subComboSet.size > 0) {
@@ -377,7 +375,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 };
             }
             
-            // Case 2: Race HAS finished (UNCHANGED)
+            // Case 2: Race HAS finished 
             const runnerNos = [race.race_1st, race.race_2nd, race.race_3rd, race.race_4th].filter((n): n is number => n !== null);
             
             if (runnerNos.length === 0) {
@@ -426,7 +424,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     );
 
 
-    // 6. Fetch current user's tips (UNCHANGED)
+    // 6. Fetch current user's tips 
     const { data: userTipsRaw, error: tipsError } = await supabaseClient
         .from("tipster_tips_header")
         .select(
@@ -454,7 +452,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     userTipsRawData.sort((a, b) => a.race_no - b.race_no);
 
-    // 7. Fetch Runner Details for all tips (UNCHANGED)
+    // 7. Fetch Runner Details for all tips 
     const tipsWithDetails: TipDetail[] = await Promise.all(userTipsRawData.map(async (tip) => {
         const racecardRaceId = raceIdMap.get(Number(tip.race_no));
 
@@ -492,14 +490,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }));
 
 
-    // 🛑 NEW: 8. Fetch Leaderboard Data using the unified RPC and type
+    // 8. Fetch Leaderboard Data using the unified RPC and type
     const { data: combinedLeaderboardData, error: combinedLeaderboardError } = await supabaseClient
         .rpc("get_comp_raceday_leaderboard", {
             comp_raceday_id_in: numericCompRacedayId,
         })
         .returns<TipsterLeaderboardEntry[]>(); // Use the unified type
 
-    // 🛑 UPDATED variable name to 'leaderboard'
+    // UPDATED variable name to 'leaderboard'
     let leaderboard: TipsterLeaderboardEntry[] = [];
     if (combinedLeaderboardError) {
         console.error("Error fetching combined leaderboard data:", combinedLeaderboardError);
@@ -509,7 +507,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         leaderboard = combinedLeaderboardData || [];
     }
     
-    // 9. Return all data (MODIFIED)
+    // 9. Return all data 
     return json({ 
         racedayHeader, 
         userTips: tipsWithDetails, 
@@ -523,7 +521,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 // --- REACT COMPONENT: DISPLAYING DATA (UPDATED LAYOUT)
 export default function RacedayDetail() {
-    // 🛑 UPDATED DESTRUCTURING: use the single 'leaderboard' list
+    // UPDATED DESTRUCTURING: use the single 'leaderboard' list
     const { racedayHeader, userTips, raceResults, tipsterNickname, compName, leaderboard, tipsterId } = useLoaderData<typeof loader>();
 
     const formatDate = (dateString: string) => {
@@ -548,40 +546,43 @@ export default function RacedayDetail() {
             
             <TipsterHeader nickname={tipsterNickname} />
 
-            {/* --- RACEDAY HEADER (FIXED LAYOUT) --- */}
+            {/* --- RACEDAY HEADER (FINAL FIXED LAYOUT) --- */}
             <div className="mb-8 p-4 border-b border-gray-200">
                 
-                <div className="flex items-center space-x-3 mb-2 pl-1">
-                    
-                    {/* RACEDAY NAME (Now first) */}
-                    <p className="text-xl font-heading font-extrabold text-gray-800 leading-none">
-                         {racedayHeader.raceday_name} 
-                    </p>
+                {/* 1. Raceday Name - ON ITS OWN ROW */}
+                <p className="text-3xl font-heading font-extrabold text-main mb-3 pb-1 pl-1 leading-none">
+                    {racedayHeader.raceday_name} 
+                </p>
 
-                    {/* RIGHT: Large track_locref in a square (Now second) */}
-                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-8 
-                                  bg-white border-2 border-main "> 
-                        <p className="text-lg font-heading font-extrabold text-main uppercase">
+                {/* 2. LocRef Square and Track Details/Comp Link - ALIGNED VERTICALLY IN THE MIDDLE */}
+                <div className="flex items-center pl-1 space-x-3"> 
+                    
+                    {/* LEFT SIDE: LocRef Square */}
+                    {/* py-2.5 is used to visually center it with the stacked text */}
+                    <div className="flex-shrink-0 flex items-center justify-center min-w-[3rem] 
+                                bg-white border-2 border-main "> 
+                        <p className="text-lg font-heading font-extrabold text-main uppercase py-2.5 px-2">
                             {racedayHeader.racetrack_locref}
                         </p>
                     </div>
-                </div>
 
-                {/* SECONDARY DETAILS (Stacked below) */}
-                <div className="flex flex-col space-y-1 pl-1"> 
-                    
-                    {/* Track Name and Date */}
-                    <p className="text-sm font-body text-gray-500 leading-none">
-                        {racedayHeader.racetrack_name} - {formatDate(racedayHeader.raceday_date)}
-                    </p>
+                    {/* RIGHT SIDE: Track-Date stacked on Comp Name */}
+                    {/* space-y-0.5 and text-md reduce the overall height slightly for better alignment */}
+                    <div className="flex flex-col space-y-0.5"> 
+                        
+                        {/* Track Name and Date */}
+                        <p className="text-md font-body text-blackmain leading-none">
+                            {racedayHeader.racetrack_name} - {formatDate(racedayHeader.raceday_date)}
+                        </p>
 
-                    {/* Comp Name (LINK) */}
-                    <Link 
-                        to={`/comps/${racedayHeader.comp_id}`} // Link back to the main competition page
-                        className="text-sm underline font-heading text-main hover:text-second transition"
-                    >
-                         {compName}
-                    </Link>
+                        {/* Comp Name (LINK) */}
+                        <Link 
+                            to={`/comps/${racedayHeader.comp_id}`} // Link back to the main competition page
+                            className="text-md underline font-heading text-main hover:text-alt transition"
+                        >
+                            {compName}
+                        </Link>
+                    </div>
                 </div>
             </div>
             

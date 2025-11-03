@@ -113,7 +113,7 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
         <div className="w-full">
             {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
             {/* Header (UNCHANGED) */}
-            <div className="flex items-center justify-between p-4 bg-black text-white rounded-t-2xl mt-10">
+            <div className="flex items-center justify-between p-4 bg-blackmain text-white rounded-t-2xl mt-10">
                 
                 {/* Left side: Icon and Heading */}
                 <div className="flex items-center space-x-3">
