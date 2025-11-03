@@ -21,19 +21,111 @@
 @tailwind utilities;
 
 
+
+/* Path: app/styles/fonts.css (or similar) */
+
+/* Light (300) */
+@font-face {
+  font-family: 'Satoshi Custom';
+  /* CORRECTED PATH: Absolute path from the public/ root */
+  src: url('/fonts/Satoshi-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap; 
+}
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-LightItalic.woff2') format('woff2');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Regular (400) */
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Medium (500) */
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-MediumItalic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Bold (700) */
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Black (900) */
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi Custom';
+  src: url('/fonts/Satoshi-BlackItalic.woff2') format('woff2');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+
+
 /* Tailwind base layer override */
 @layer base {
 
   body, p, a, h3, h4 {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-weight: 300;
+    font-family: 'Satoshi Custom', sans-serif;
+
     
   }
 
-  h1, h2 {
-    font-family: 'Inter', sans-serif;
-    font-weight: bold;
+  h1 {
+    font-family: 'Satoshi Custom', sans-serif;
+
   }
+
+  h2 {
+    font-family: 'Satoshi Custom', sans-serif;
+
+  }
+
 }
 
 
@@ -41,19 +133,19 @@
 
 /* Selected colours */
 :root {
-  --color-main: #008e5e;
-  --color-second: #09c787;  /*bright red #ae1111*/
+  --color-main: #336E5B;
+  --color-second: #D3E8D7;  /*bright red #ae1111*/
 
-  --color-main-dark: #008e5e;
-  --color-main-medium: #516080;
-  --color-main-light: #76819B;
-  --color-main-lighter: #9CA3B7;
-  --color-main-lightest: #EBECF0;
+  --color-main-dark: #336E5B;
+  --color-main-medium: #23875D;
+  --color-main-light: #F3F5F7;
+  --color-main-lighter: #ae1111;
+  --color-main-lightest: #ae1111;
   
-  --color-black-main: #383737;
-  --color-black-medium: #4a4949;
-  --color-black-light: #F8F8F8;
-  --color-black-lighter: #e8e4e4;
+  --color-black-main: #1b1c1e;
+  --color-black-medium: #ae1111;
+  --color-black-light: #dde8df;
+  --color-black-lighter: #F3F5F7;
 
   
   --color-buttonmain: var(--color-main);
@@ -134,12 +226,22 @@
   
  /* Border utilities */
 
+
+  .bg-gradient-custom {
+    /* This matches the 'bg-gradient-to-r' (to right) behavior */
+    background-image: linear-gradient(to right, var(--color-main), var(--color-main-medium));
+  }
+
   .bg-main {
     background-color: var(--color-bgmain);
   }
 
   .bg-second {
     background-color: var(--color-bgsecond);
+  }
+
+  .bg-mainlight {
+    background-color: var(--color-main-light);
   }
 
   .bg-blacklight {

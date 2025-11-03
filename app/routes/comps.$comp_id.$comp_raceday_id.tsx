@@ -7,6 +7,8 @@ import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
 import { MyTipsSection } from "~/components/MyTipsSection"; 
 import { NextToJumpSummary } from "~/components/NextToJumpSummary"; 
+import { LeaderboardPoints } from "~/components/LeaderboardPoints"; // <-- NEW IMPORT
+import { LeaderboardOdds } from "~/components/LeaderboardOdds";     // <-- NEW IMPORT
 
 // --- TYPE DEFINITIONS (ALL EXPORTED) ---
 
@@ -576,19 +578,26 @@ export default function RacedayDetail() {
             </div>
             {/* ------------------------------------------------------------------ */}
 
-
 {/*---------------------------------------------------------------------------------------------*/}
-            {/* 🚀 NextToJumpSummary (UNCHANGED) */}
-{/*---------------------------------------------------------------------------------------------*/}
-            <NextToJumpSummary
-                racedayHeader={racedayHeader}
-                raceResults={raceResults}
-                nextToJumpIndex={nextToJumpIndex}
-            />
+            {/* 🛑 NEW: Responsive 3-Column Container */}
+{/*---------------------------------------------------------------------------------------------*/} 
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
 
+                {/* 🚀 NextToJumpSummary */}
+                <NextToJumpSummary
+                    racedayHeader={racedayHeader}
+                    raceResults={raceResults}
+                    nextToJumpIndex={nextToJumpIndex}
+                />
 
+                {/* 📊 Leaderboard Points */} 
+                <LeaderboardPoints />
 
+                {/* 📈 Leaderboard Odds */} 
+                <LeaderboardOdds />
 
+            </div>
+            {/* ------------------------------------------------------------------ */}
 
 {/*---------------------------------------------------------------------------------------------*/}
             {/* --- USER TIPS SECTION (NEW COMPONENT) --- */}

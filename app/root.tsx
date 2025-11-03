@@ -1,3 +1,6 @@
+// app/root.tsx
+
+import type { LinksFunction } from "@remix-run/node"; // <-- Import the type
 import {
   Links,
   Meta,
@@ -6,8 +9,27 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import "./tailwind.css";
-// 1. Import the new Banner component
-import Banner from "~/components/Banner"; 
+
+import Banner from "~/components/Banner";
+import Footer from "~/components/Footer";
+
+// 🛑 FIX: Define the LinksFunction to correctly load external fonts/icons
+export const links: LinksFunction = () => [
+    // 1. MATERIAL SYMBOLS ICON LINK (Required for the power_settings_circle icon)
+    { 
+        rel: "stylesheet", 
+        href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" 
+    },
+    
+    // 2. Preconnect links (Good practice for performance)
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+
+    // Note: Since you are using 'import "./tailwind.css"', 
+    // you don't need to link it here, but it's often cleaner to do so.
+    // However, we respect your current import structure.
+];
+
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,21 +38,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         
-        
-        {/* 👇 UPDATED: Load Manrope and Prompt 👇 */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" 
-        />
-
-
+        {/* IMPORTANT: <Meta /> and <Links /> must be here */}
         <Meta />
-        <Links />
+        <Links /> 
       </head>
-      <body>
+      
+      {/* 🛑 STICKY FOOTER LAYOUT: min-h-screen and flex flex-col applied to body */}
+      <body className="min-h-screen flex flex-col bg-gradient-custom"> 
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -41,10 +55,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    // 2. Render the Banner component before the Outlet
+    // Wrap the entire application content in the sticky layout structure
     <>
-      <Banner /> 
-      <Outlet />
+      {/* 1. HEADER */}
+      <Banner />
+      
+      {/* 2. MAIN CONTENT (CRITICAL: Needs flex-grow to push footer down) */}
+      <main className="flex-grow bg-white rounded-tl-3xl rounded-tr-3xl">
+          <Outlet />
+      </main>
+      
+      {/* 3. FOOTER */}
+      <main className="bg-white ">
+          <Footer />
+      </main>
     </>
   );
 }

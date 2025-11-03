@@ -29,11 +29,12 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                     You have not submitted any tips for this raceday yet.
                 </p>
             ) : (
-                <div className="mb-10 shadow-lg rounded-lg border border-gray-100 overflow-hidden">
+                // 🛑 MODIFIED: Rounded to 2XL, changed border to gray-300
+                <div className="mb-10  overflow-hidden">
                     
-                    {/* Table Header - Now 2 columns (RACE: 2/12, SELECTION: 10/12) */}
-                    <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-500 bg-gray-50 p-3 border-b border-gray-100">
-                        <div className="col-span-2 text-left">RACE</div>
+                    {/* 🛑 MODIFIED: Removed bg-gray-50, updated border color */}
+                    <div className="grid grid-cols-12 text-xs font-semibold uppercase text-blackmain p-3 ">
+                        <div className="col-span-2 text-center">RACE</div>
                         <div className="col-span-10 text-left">SELECTION</div>
                     </div>
 
@@ -59,10 +60,10 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                         return (
                             <div
                                 key={index}
-                                className="grid grid-cols-12 items-center text-sm p-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-100"
+                                className="grid grid-cols-12 items-center text-sm p-3 border border-main gap-4 rounded-full  hover:bg-mainlight transition duration-100 mb-1"
                             >
                                 {/* 1. RACE - 2/12 width */}
-                                <div className="col-span-2 text-lg font-extrabold text-indigo-600">
+                                <div className="col-span-2 text-lg text-center font-extrabold text-main">
                                     {tip.race_no}
                                 </div>
                                 
