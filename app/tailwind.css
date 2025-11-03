@@ -134,8 +134,13 @@
 /* Selected colours */
 :root {
   --color-main: #336E5B;
-  --color-second: #D3E8D7;  /*bright red #ae1111*/
+  --color-second: #DBFCE7;  /*bright red #ae1111*/
+  
   --color-alert: #c34242;
+  --color-alertlight: #fe8282;
+
+  --color-alt: #1c1962;
+  --color-altlight: #4843d6;
 
   --color-main-dark: #336E5B;
   --color-main-medium: #23875D;
@@ -238,6 +243,16 @@
   .bg-gradient-custom {
     /* This matches the 'bg-gradient-to-r' (to right) behavior */
     background-image: linear-gradient(to right, var(--color-main), var(--color-main-medium));
+  }
+
+  .bg-gradient-customalt {
+    /* This matches the 'bg-gradient-to-r' (to right) behavior */
+    background-image: linear-gradient(to right, var(--color-alt), var(--color-altlight));
+  }
+
+  .bg-gradient-customalert {
+    /* This matches the 'bg-gradient-to-r' (to right) behavior */
+    background-image: linear-gradient(to right, var(--color-alert), var(--color-alertlight));
   }
 
   .bg-main {

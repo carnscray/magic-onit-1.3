@@ -63,7 +63,7 @@ export function NextToJumpSummary({
         <div className="shadow-lg rounded-2xl overflow-hidden">
             
 
-            <div className="flex items-center justify-between p-4 bg-gradient-custom text-white rounded-t-2xl">
+            <div className="flex items-center justify-between p-4 bg-gradient-customalt text-white rounded-t-2xl">
                 
                 {/* Left side: Icon and Heading */}
                 <div className="flex items-center space-x-3">
@@ -83,7 +83,7 @@ export function NextToJumpSummary({
             </div>
 
             {/* Content Container */}
-            <div className=" bg-white rounded-b-2xl border border-gray-100 border-t-0 pb-8">
+            <div className="divide-y divide-gray-200 bg-white rounded-b-2xl border border-gray-100 border-t-0 pb-8">
                 
                 {/* 🛑 MODIFIED: Full-width Race Details Bar */}
                 {/* Added bg-second and used -mx-4 to go edge-to-edge. Changed internal padding. */}

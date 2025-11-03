@@ -1,17 +1,19 @@
 // app/components/LeaderboardOdds.tsx
 
-import React, { useState } from 'react'; // 🛑 Import useState
-// 🛑 Import the unified type from the route file
+import React, { useState } from 'react'; 
+// Use the unified type from the route file
 import type { TipsterLeaderboardEntry } from "~/routes/comps.$comp_id.$comp_raceday_id"; 
 
 interface LeaderboardOddsProps {
-    // 🛑 Use the unified type for the incoming data
+    // 🛑 UPDATED: Use the unified type for the incoming data
     leaderboardData: TipsterLeaderboardEntry[];
+    // 🛑 NEW PROP: ID of the currently logged-in user
+    currentTipsterId: number; 
 }
 
-// Number of rows to display initially and add per 'Load More' click (Same as Points)
-const INITIAL_ROWS = 6;
-const ROWS_PER_LOAD = 10;
+// Number of rows to display initially and add per 'Load More' click
+const INITIAL_ROWS = 6; // Matching LeaderboardPoints change
+const ROWS_PER_LOAD = 10; // Matching LeaderboardPoints change
 
 /**
  * Helper function to convert a number to its ordinal string (e.g., 1 -> 1st, 2 -> 2nd).
@@ -30,17 +32,17 @@ const getOrdinal = (n: number): string => {
  * Helper function to format the odds value as currency (e.g., $123.45)
  */
 const formatCurrency = (n: number): string => {
-    // Use toLocaleString for currency formatting (assuming AUD/USD for the sake of example)
+    // Assuming AUD for the sake of example, adjust currency code as needed
     return new Intl.NumberFormat('en-AU', {
         style: 'currency',
-        currency: 'AUD', // Adjust currency code as needed
+        currency: 'AUD', 
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(n);
 };
 
 
-const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData }) => {
+const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData, currentTipsterId }) => {
     
     // 1. Sort Data by Odds Return (Descending)
     const sortedData = [...leaderboardData].sort((a, b) => 
@@ -122,12 +124,20 @@ const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData }) =>
                         {/* 🛑 TIPSTER ROWS: Map over dataToDisplay */}
                         {dataToDisplay.map((row) => {
                             // Determine text color based on positive/negative odds return
-                            const oddsColorClass = row.odds_total_return >= 0 ? 'text-green-600' : 'text-red-600';
+                            const oddsColorClass = row.odds_total_return >= 0 ? 'text-main' : 'text-red-600';
+                            
+                            // 🛑 NEW: Check if this row belongs to the current user
+                            const isCurrentUser = row.tipster_id === currentTipsterId;
+
+                            // 🛑 NEW: Conditional classes
+                            const rowClasses = isCurrentUser 
+                                ? "bg-second" // Highlighted class
+                                : "hover:bg-gray-50 transition duration-100";
 
                             return (
                                 <div 
                                     key={row.tipster_id} 
-                                    className={`grid grid-cols-12 items-center hover:bg-gray-50 transition duration-100 py-3 px-4`} 
+                                    className={`grid grid-cols-12 items-center py-3 px-4 ${rowClasses}`} 
                                 >
                                     {/* 1. Rank Column (col-span-2) */}
                                     <div className="col-span-2 -ml-1">

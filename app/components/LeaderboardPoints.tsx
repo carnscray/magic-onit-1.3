@@ -1,10 +1,12 @@
 // app/components/LeaderboardPoints.tsx
 
-import React, { useState } from 'react'; // 🛑 Import useState
+import React, { useState } from 'react'; 
 import type { TipsterLeaderboardRow } from "~/routes/comps.$comp_id.$comp_raceday_id"; 
 
 interface LeaderboardPointsProps {
     leaderboardData: TipsterLeaderboardRow[];
+    // 🛑 ADDED: The ID of the currently logged-in tipster
+    currentTipsterId: number; 
 }
 
 // Number of rows to display initially and add per 'Load More' click
@@ -24,7 +26,7 @@ const getOrdinal = (n: number): string => {
     }
 };
 
-const LeaderboardPoints: React.FC<LeaderboardPointsProps> = ({ leaderboardData }) => {
+const LeaderboardPoints: React.FC<LeaderboardPointsProps> = ({ leaderboardData, currentTipsterId }) => {
     
     const hasData = leaderboardData && leaderboardData.length > 0;
 
@@ -99,10 +101,19 @@ const LeaderboardPoints: React.FC<LeaderboardPointsProps> = ({ leaderboardData }
 
                         {/* 🛑 TIPSTER ROWS: Map over dataToDisplay */}
                         {dataToDisplay.map((row) => {
+                            // 🛑 NEW: Check if this row belongs to the current user
+                            const isCurrentUser = row.tipster_id === currentTipsterId;
+
+                            // 🛑 NEW: Conditional classes
+                            const rowClasses = isCurrentUser 
+                                ? "bg-second" // Highlighted class
+                                : "hover:bg-gray-50 transition duration-100";
+
                             return (
                                 <div 
                                     key={row.tipster_id} 
-                                    className={`grid grid-cols-12 items-center hover:bg-gray-50 transition duration-100 py-3 px-4`} 
+                                    // 🛑 Use conditional classes
+                                    className={`grid grid-cols-12 items-center py-3 px-4 ${rowClasses}`} 
                                 >
                                     {/* 1. Rank Column (col-span-2) */}
                                     <div className="col-span-2 -ml-1">

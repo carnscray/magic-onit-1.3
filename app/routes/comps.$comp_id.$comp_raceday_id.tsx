@@ -516,14 +516,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         raceResults, 
         tipsterNickname, 
         compName, 
-        leaderboard // 🛑 UPDATED: Single unified list
+        leaderboard,
+        tipsterId
     } as RacedayTipsData);
 };
 
 // --- REACT COMPONENT: DISPLAYING DATA (UPDATED LAYOUT)
 export default function RacedayDetail() {
     // 🛑 UPDATED DESTRUCTURING: use the single 'leaderboard' list
-    const { racedayHeader, userTips, raceResults, tipsterNickname, compName, leaderboard } = useLoaderData<typeof loader>();
+    const { racedayHeader, userTips, raceResults, tipsterNickname, compName, leaderboard, tipsterId } = useLoaderData<typeof loader>();
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-AU', {
@@ -602,10 +603,14 @@ export default function RacedayDetail() {
             <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 mt-8 lg:items-start">
 
                 {/* Leaderboard Points 🛑 PASSING THE SINGLE LIST */} 
-                <LeaderboardPoints leaderboardData={leaderboard} />
+                <LeaderboardPoints leaderboardData={leaderboard}
+                currentTipsterId={tipsterId}
+                 />
 
                 {/* Leaderboard Odds 🛑 PASSING THE SINGLE LIST */} 
-                <LeaderboardOdds leaderboardData={leaderboard} />
+                <LeaderboardOdds leaderboardData={leaderboard} 
+                currentTipsterId={tipsterId}
+                />
 
             </div>
 
