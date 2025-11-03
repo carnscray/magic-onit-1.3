@@ -1,4 +1,4 @@
-// MyTipsSection.tsx (New File)
+// MyTipsSection.tsx (Final Update)
 
 // Import the necessary types from your main route file for strong typing
 import type { TipDetail } from "./comps.$comp_id.$comp_raceday_id";
@@ -9,8 +9,7 @@ interface MyTipsSectionProps {
 
 export function MyTipsSection({ userTips }: MyTipsSectionProps) {
     return (
-        // 🛑 MODIFIED: Added w-full (mobile default) and lg:max-w-1/2 lg:mx-auto for centering on desktop
-        <div className="mt-16 w-full">
+        <div className="w-full">
             
             <div className="flex items-center space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
                 <span className="material-symbols-outlined text-3xl">
@@ -43,17 +42,12 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                         const mainRunnerNo = tip.tip_main;
                         const mainRunnerName = tip.tip_main_details?.runner_name || 'Name N/A';
                         
-                        // Start with the main tip display
-                        let combinedRunnerDisplay = `${mainRunnerNo}. ${mainRunnerName}`;
-                        
                         // Alt Runner (SUB) details
                         const altRunnerNo = tip.tip_alt;
                         const altRunnerName = tip.tip_alt_details?.runner_name || 'Name N/A';
                         
-                        // Append SUB tip if it exists
-                        if (altRunnerNo) {
-                            combinedRunnerDisplay += ` > SUB: ${altRunnerNo}. ${altRunnerName}`;
-                        }
+                        // Combined display string if no sub tip exists
+                        const defaultDisplay = `${mainRunnerNo}. ${mainRunnerName}`;
 
                         return (
                             <div
@@ -67,7 +61,32 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                                 
                                 {/* 2. RUNNER (Combined Tip) - 10/12 width */}
                                 <div className="col-span-10 text-gray-800 font-medium truncate">
-                                    {combinedRunnerDisplay}
+                                    
+                                    {/* Conditional rendering based on the presence of a Sub Tip (altRunnerNo) */}
+                                    {altRunnerNo ? (
+                                        <>
+                                            {/* Case 1: Sub Tip Exists (Apply Split Colors) */}
+                                            
+                                            {/* Main Tip in text-alert */}
+                                            <span className="font-semibold text-alert">
+                                                {mainRunnerNo}. {mainRunnerName}
+                                            </span>
+                                            
+                                            {/* Separator */}
+                                            <span className="text-main font-semibold mx-2 font-normal">
+                                                &gt; SUB:
+                                            </span>
+                                            
+                                            {/* Sub Tip Content in text-main */}
+                                            <span className="font-semibold text-main">
+                                                {altRunnerNo}. {altRunnerName}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        /* Case 2: No Sub Tip (Render as normal) */
+                                        defaultDisplay
+                                    )}
+
                                 </div>
                             </div>
                         );

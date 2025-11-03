@@ -2,8 +2,10 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
+// 🛑 FIX: Correct import for the TipsterHeader component
+import { TipsterHeader } from "../components/TipsterHeader"; 
 
-// --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS (UNCHANGED) ---
+// --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS ---
 export const loader = async ({ request }: LoaderFunctionArgs) => { 
   const { supabaseClient } = createSupabaseServerClient(request);
 
@@ -76,23 +78,10 @@ export default function Comps() {
   const { competitions, tipsterDetails } = useLoaderData<typeof loader>();
 
   return (
-    <div className="p-8 max-w-xl mx-auto lg:max-w-7xl">
+    <div className="max-w-xl mx-auto lg:max-w-7xl">
       
-      {/* 🛑 MODIFIED: Tipster Nickname in top right, now includes icon and changed styling */}
-      <div className="text-right mb-4 flex justify-end items-center">
-        {/* Emoji People Icon */}
-        <span 
-          className="material-symbols-outlined mr-1 text-xl text-blackmain" // Adjusted size for better alignment
-          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 30" }}
-        >
-          emoji_people
-        </span>
-        
-        {/* Nickname Text */}
-        <p className="text-sm text-blackmain ">
-          {tipsterDetails.tipster_nickname}
-        </p>
-      </div>
+      {/* 🛑 FIX: Use the reusable TipsterHeader component */}
+      <TipsterHeader nickname={tipsterDetails.tipster_nickname} />
 
       {/* MODIFIED: "My Comps" heading with chess_knight icon */}
       <div className="flex items-center mb-4 pb-2 border-b border-gray-300">

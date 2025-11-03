@@ -2,17 +2,15 @@
 
 import { Form, useNavigation } from "@remix-run/react";
 
-export default function Footer() {
+// 🛑 FIX: Changed from 'export default' to 'export' (Named Export)
+export function Footer() {
   const navigation = useNavigation();
   const isSigningOut =
     navigation.state === "submitting" &&
     navigation.formAction === "/auth-sign-out";
 
   return (
-    // 🛑 CHANGES:
-    // 1. Removed 'bg-gradient-custom' to make the background transparent (relying on body).
-    // 2. Added 'rounded-tl-xl rounded-tr-xl' to give the footer curves that match the <main> element.
-    // 3. Removed 'shadow-lg' as it might interfere with the layering illusion.
+    // Styling adjusted for a clean, full-width footer with rounded corners
     <footer className="w-full bg-gradient-custom mt-auto rounded-tl-3xl rounded-tr-3xl"> 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-start items-center h-16">
         

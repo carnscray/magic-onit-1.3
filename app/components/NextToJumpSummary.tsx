@@ -124,7 +124,7 @@ export function NextToJumpSummary({
                                             <span className="font-extrabold text-main mr-1 text-sm w-5 text-right flex-shrink-0">
                                                 {runner.runner_no}.
                                             </span>
-                                            <span className="truncate text-gray-700 font-medium pl-2 ">
+                                            <span className="truncate text-blackmain font-medium pl-2 ">
                                                 {runner.runner_name}
                                             </span>
                                         </div>
@@ -155,32 +155,32 @@ export function NextToJumpSummary({
                 {/* --- UNIQUE SUB TIPS SECTION --- */}
                 {uniqueSubTips.length > 0 && (
                     // 🛑 MODIFIED: border-red-200 changed to border-gray-200
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 pl-4 pr-4">
                         
                         {/* 🛑 NEW: Title for Sub-Tips section */}
                         <h4 className="text-md font-heading font-bold text-main mb-2 flex items-center space-x-1">
                             <span className="material-symbols-outlined text-main text-xl">
-                                people
+                                Sync_Alt
                             </span>
-                            <span>Unique Sub Tips</span>
+                            <span>Substitutions</span>
                         </h4>
 
                         {/* 🛑 MODIFIED: bg-red-100/border-red-200 changed to gray-100/gray-200 */}
-                        <ul className="text-sm space-y-1 bg-gray-100 p-3 rounded-lg border border-gray-200">
+                        <ul className="text-sm space-y-1 bg-mainlight p-3 rounded-lg border border-gray-200">
                             {uniqueSubTips.map((combo, index) => (
-                                <li key={index} className="text-gray-700">
-                                    {/* Main Runner - 🛑 MODIFIED: text-red-700 changed to text-main */}
-                                    <span className="font-bold text-main">
+                                <li key={index} className="text-main">
+                                    {/* Main Runner -  */}
+                                    <span className="font-semibold text-alert">
                                         {combo.main_runner_no}. {combo.main_runner_name}
                                     </span>
                                     
-                                    {/* Separator - 🛑 MODIFIED: text-red-500 changed to text-gray-500 */}
-                                    <span className="font-semibold text-gray-500 mx-2">
+                                    
+                                    <span className="font-semibold text-mainblack mx-2">
                                         &gt; SUB:
                                     </span>
                                     
-                                    {/* Alternate Runner - 🛑 MODIFIED: text-red-700 changed to text-main */}
-                                    <span className="font-bold text-main">
+                                    {/* Alternate Runner  */}
+                                    <span className="font-semibold text-main">
                                         {combo.alt_runner_no}. {combo.alt_runner_name}
                                     </span>
                                 </li>

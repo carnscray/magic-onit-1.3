@@ -2,13 +2,17 @@
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
 import { MyTipsSection } from "~/components/MyTipsSection"; 
 import { NextToJumpSummary } from "~/components/NextToJumpSummary"; 
-import { LeaderboardPoints } from "~/components/LeaderboardPoints"; // <-- NEW IMPORT
-import { LeaderboardOdds } from "~/components/LeaderboardOdds";     // <-- NEW IMPORT
+import { LeaderboardPoints } from "~/components/LeaderboardPoints"; 
+import { LeaderboardOdds } from "~/components/LeaderboardOdds"; 
+import { Racecard } from "~/components/Racecard";
+
+import { TipsterHeader } from "../components/TipsterHeader"; 
+
 
 // --- TYPE DEFINITIONS (ALL EXPORTED) ---
 
@@ -20,6 +24,7 @@ export type RacedayHeaderData = {
     race_count: number;
     racetrack_name: string;
     racetrack_locref: string;
+    comp_id: number;
 };
 
 // Used for non-finished races to display the full race card
@@ -86,6 +91,9 @@ export type RacedayTipsData = {
     racedayHeader: RacedayHeaderData;
     userTips: TipDetail[];
     raceResults: RaceResultDetail[];
+    // 🛑 ADDED: Field for the Tipster Header
+    tipsterNickname: string | null; 
+    compName: string;
 };
 
 // --- LOADER FUNCTION: FETCHING RACEDAY DETAILS, RACES, AND USER TIPS (MODIFIED) ---
@@ -108,18 +116,36 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const numericCompRacedayId = Number(compRacedayId);
     const numericCompId = Number(compId);
 
-    // 2. Fetch the user's tipster ID (UNCHANGED)
+    // 2. Fetch the user's tipster ID AND NICKNAME (MODIFIED)
     const { data: profile, error: profileError } = await supabaseClient
         .from("user_profiles")
-        .select("tipster_id")
+        .select("tipster:tipster_id(id, tipster_nickname)") // 🛑 FETCH NICKNAME
         .eq("id", user.id)
         .single();
 
-    if (profileError || !profile) {
-        console.error("Error fetching tipster ID:", profileError);
-        throw new Response("User profile (tipster_id) not found.", { status: 404 });
+    if (profileError || !profile || !profile.tipster) { // 🛑 CHECK FOR tipster EXISTENCE
+        console.error("Error fetching tipster details:", profileError);
+        throw new Response("User profile (tipster details) not found.", { status: 404 });
     }
-    const tipsterId = profile.tipster_id;
+    
+    // Extract both ID and Nickname
+    const tipsterId = profile.tipster.id;
+    const tipsterNickname = profile.tipster.tipster_nickname;
+
+
+    // Fetch the Competition Name
+    const { data: compDetails, error: compError } = await supabaseClient
+        .from("comp")
+        .select("comp_name")
+        .eq("id", numericCompId)
+        .single();
+        
+    if (compError || !compDetails) {
+        console.error("Error fetching competition details:", compError);
+        throw new Response("Competition details not found.", { status: 404 });
+    }
+    const compName = compDetails.comp_name;
+
 
 
     // 3. Get Raceday Header Data & All Race Details (UNCHANGED)
@@ -169,6 +195,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         race_count: day.racecard_race.length,
         racetrack_name: day.racetrack?.track_name ?? 'N/A',
         racetrack_locref: day.racetrack?.track_locref ?? 'N/A',
+        comp_id: numericCompId,
     };
 
     // Process all races to extract details, results, and odds (UNCHANGED)
@@ -453,16 +480,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
     // 8. Return all data
-    return json({ racedayHeader, userTips: tipsWithDetails, raceResults } as RacedayTipsData);
+    return json({ racedayHeader, userTips: tipsWithDetails, raceResults, tipsterNickname, compName } as RacedayTipsData);
 };
 
 {/*---------------------------------------------------------------------------------------------*/}
-// --- REACT COMPONENT: DISPLAYING DATA
+// --- REACT COMPONENT: DISPLAYING DATA (UPDATED LAYOUT)
 {/*---------------------------------------------------------------------------------------------*/}
 
-// --- REACT COMPONENT: DISPLAYING DATA (UNCHANGED FROM LAST STEP) ---
 export default function RacedayDetail() {
-    const { racedayHeader, userTips, raceResults } = useLoaderData<typeof loader>();
+    // 🛑 DESTRUCTURED: tipsterNickname is now available
+    const { racedayHeader, userTips, raceResults, tipsterNickname, compName } = useLoaderData<typeof loader>();
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-AU', {
@@ -472,338 +499,103 @@ export default function RacedayDetail() {
         });
     };
 
-    // Helper to format odds (e.g., 5.5 to $5.50).
-    const formatOdds = (odds: number | null): string => {
-        if (odds === null) return "N/A";
-        // ToFixed(2) handles both standard odds and 0 (for $0.00)
-        return `$${odds.toFixed(2)}`;
-    };
-
     // Helper to determine if a race has results
     const hasResults = (race: RaceResultDetail) => {
         return race.race_1st !== null;
     };
 
-    // 💡 NEW HELPER FUNCTION: Get the last 5 characters of the form string.
-    const getFormSlice = (form: string | null): string => {
-        if (!form) return '';
-        // Takes the last 5 characters. If less than 5, takes all.
-        return form.slice(-5);
-    };
-
     // Find the index of the first race with no result.
     const nextToJumpIndex = raceResults.findIndex(race => !hasResults(race));
     
-    // Renders a single, aligned results row (UNCHANGED)
-    const ResultsRow = ({
-        place, 
-        runnerNo, 
-        runnerName, 
-        wOdds, 
-        pOdds,
-        isFirst,
-        isLast
-    }: {
-        place: number, 
-        runnerNo: number | null, 
-        runnerName: string | null, 
-        wOdds?: number | null, 
-        pOdds: number | null,
-        isFirst: boolean,
-        isLast: boolean
-    }) => {
-        // Place text is uppercase
-        const placeText = place === 1 ? '1ST' : place === 2 ? '2ND' : place === 3 ? '3RD' : '4TH';
-        
-        const rowClasses = isFirst 
-            ? 'bg-green-50 border-b border-green-200' 
-            : isLast 
-                ? '' 
-                : 'border-b border-gray-100';
+    // Note: The ResultsRow and getFormSlice components/functions were moved 
+    // to the Racecard component file or a utility file.
 
-        // Runner No is right-justified with a dot
-        const runnerNoDisplay = runnerNo !== null ? `${runnerNo}.` : '??.';
-        const runnerNameDisplay = runnerName ?? 'Name N/A';
-        
-        // Grid columns using a 12-column system
-        return (
-            <div className={`grid grid-cols-12 items-center py-1 px-1 ${rowClasses}`}>
-                
-                {/* 1. Position Text - Left Aligned */}
-                <p className={`col-span-1 text-sm font-bold ${isFirst ? 'text-green-600' : 'text-gray-600'} text-left`}>
-                    {placeText}
-                </p>
-                
-                {/* 2. Runner No - Right Aligned, Bold. */}
-                <p className="col-span-2 text-lg font-extrabold text-gray-800 text-right">
-                    {runnerNoDisplay}
-                </p>
-
-                {/* 3. Runner Name - Left Aligned, Truncated/Faded */}
-                <p className={`col-span-5 text-sm font-medium text-gray-700 truncate text-left ml-2`}>
-                    {runnerNameDisplay}
-                </p>
-
-                {/* 4. W Odds (Only for 1ST place) / Empty Placeholder for 2ND, 3RD, 4TH */}
-                <div className="col-span-2 flex justify-end text-sm text-gray-500 leading-tight">
-                    {isFirst && (
-                        <span className="text-sm">{formatOdds(wOdds)}</span>
-                    )}
-                </div>
-
-                {/* 5. P Odds (Final Column) */}
-                <div className={`col-span-2 flex justify-end text-sm text-gray-500 leading-tight`}>
-                    {pOdds !== null && (
-                        <span className="text-sm">{formatOdds(pOdds)}</span>
-                    )}
-                    {/* 4TH place is blank because pOdds is explicitly passed as null */}
-                </div>
-            </div>
-        );
-    }
-
-
+    
     return (
-        <div className="p-2 max-w-xl mx-auto lg:max-w-7xl">
+        <div className="p-2 max-w-xl mx-auto lg:max-w-7xl lg:items-start">
+            
+            {/* 🛑 ADDED: Tipster Header at the top of the component */}
+            <TipsterHeader nickname={tipsterNickname} />
+
 {/*---------------------------------------------------------------------------------------------*/}
-            {/* --- RACEDAY HEADER (UNCHANGED) --- */}
+            {/* --- RACEDAY HEADER (FIXED LAYOUT) --- */}
 {/*---------------------------------------------------------------------------------------------*/}
-            <div className="mb-8 border-b p-4">
-                <p className="text-xl font-heading font-extrabold text-gray-800">
-                    {racedayHeader.raceday_name} ({racedayHeader.racetrack_locref})
-                </p>
-                <p className="text-sm font-body text-gray-500">
-                    {racedayHeader.racetrack_name} - {formatDate(racedayHeader.raceday_date)}
-                </p>
+<div className="mb-8 p-4 border-b border-gray-200">
+                
+                {/* 🛑 WRAPPER FOR TOP ROW: Ensures Raceday Name and locref box are on one line */}
+                <div className="flex items-center space-x-3 mb-2 pl-1">
+                    
+                    {/* RACEDAY NAME (Now first) */}
+                    <p className="text-xl font-heading font-extrabold text-gray-800 leading-none">
+                         {racedayHeader.raceday_name} 
+                    </p>
+
+                    {/* RIGHT: Large track_locref in a square (Now second) */}
+                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-8 
+                                  bg-white border-2 border-main "> 
+                        <p className="text-lg font-heading font-extrabold text-main uppercase">
+                            {racedayHeader.racetrack_locref}
+                        </p>
+                    </div>
+                </div>
+
+                {/* SECONDARY DETAILS (Stacked below) */}
+                <div className="flex flex-col space-y-1 pl-1"> 
+                    
+                    {/* Track Name and Date */}
+                    <p className="text-sm font-body text-gray-500 leading-none">
+                        {racedayHeader.racetrack_name} - {formatDate(racedayHeader.raceday_date)}
+                    </p>
+
+                    {/* Comp Name (LINK) */}
+                    <Link 
+                        to={`/comps/${racedayHeader.comp_id}`} // Link back to the main competition page
+                        className="text-sm underline font-heading text-main hover:text-second transition"
+                    >
+                         {compName}
+                    </Link>
+                </div>
             </div>
-            {/* ------------------------------------------------------------------ */}
-
 {/*---------------------------------------------------------------------------------------------*/}
-            {/* 🛑 NEW: Responsive 3-Column Container */}
+            {/* NEXT TO JUMP AND MY TIPS (Grouped in 2 columns on large screen) */}
 {/*---------------------------------------------------------------------------------------------*/} 
-            <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 h-auto lg:items-start">
 
-                {/* 🚀 NextToJumpSummary */}
+                {/* NextToJumpSummary */}
                 <NextToJumpSummary
                     racedayHeader={racedayHeader}
                     raceResults={raceResults}
                     nextToJumpIndex={nextToJumpIndex}
                 />
 
-                {/* 📊 Leaderboard Points */} 
+                {/* MyTipsSection */} 
+                <MyTipsSection userTips={userTips} />
+
+
+            </div>
+{/*---------------------------------------------------------------------------------------------*/}
+            {/* --- LEADERBOARDS (Grouped in 2 columns on large screen) --- */}
+{/*---------------------------------------------------------------------------------------------*/}            
+            
+            <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 mt-8 lg:items-start">
+
+                {/* Leaderboard Points */} 
                 <LeaderboardPoints />
 
-                {/* 📈 Leaderboard Odds */} 
+                {/* Leaderboard Odds */} 
                 <LeaderboardOdds />
 
             </div>
-            {/* ------------------------------------------------------------------ */}
-
-{/*---------------------------------------------------------------------------------------------*/}
-            {/* --- USER TIPS SECTION (NEW COMPONENT) --- */}
-{/*---------------------------------------------------------------------------------------------*/}            
-            <MyTipsSection userTips={userTips} />
-
-
-
-
-
-
 
 
 {/*---------------------------------------------------------------------------------------------*/}
-            {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
+            {/* RACE CARD LIST AND RESULTS SECTION (Full Width) */}
 {/*---------------------------------------------------------------------------------------------*/}
-            {/* 🛑 MODIFIED: Header matching MyTipsSection: bg-main, text-white, rounded-t-2xl. Used justify-between to push the badge to the right. */}
-            <div className="flex items-center justify-between p-4 bg-gradient-custom text-white rounded-t-2xl mt-10">
-                
-                {/* Left side: Icon and Heading */}
-                <div className="flex items-center space-x-3">
-                    <span className="material-symbols-outlined text-3xl">
-                        List_Alt
+            <Racecard 
+                raceResults={raceResults} 
+                nextToJumpIndex={nextToJumpIndex} 
+            />
 
-                    </span>
-
-                    <h2 className="text-2xl font-heading font-semibold">
-                        Racecard
-                    </h2>
-                </div>
-
-                {/* Right side: Badge */}
-                <span className="flex items-center justify-center h-8 w-8 rounded-4px bg-white text-main text-base font-bold  flex-shrink-0">
-                    {raceResults.length}
-                </span>
-            </div>
-
-
-
-
-            <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2 mb-10">
-                {raceResults.map((race, index) => {
-                    
-                    let statusText: 'RESULT' | 'NEXT TO JUMP' | null = null;
-                    let statusClasses = '';
-                    
-                    if (hasResults(race)) {
-                        statusText = 'RESULT';
-                        statusClasses = 'bg-green-100 text-green-800';
-                    } else if (index === nextToJumpIndex && index !== -1) {
-                        statusText = 'NEXT TO JUMP';
-                        statusClasses = 'bg-pink-100 text-pink-800'; // Distinct color for next race
-                    }
-
-                    return (
-                        <li
-                            key={index}
-                            className="p-4 bg-white shadow-lg rounded-lg border border-gray-100"
-                        >
-                            <div className="flex flex-col space-y-3">
-                                {/* Race Number and Status on a single line. Race Notes removed. */}
-                                <div className="flex items-center justify-between border-b pb-2">
-                                    <div className="flex items-center space-x-2">
-                                        {/* 💡 MODIFIED: 'Race' is slightly larger */}
-                                        <span className="text-sm font-heading font-semibold text-gray-500 uppercase">RACE</span>
-                                        <span className="text-2xl font-heading font-extrabold text-indigo-600">
-                                            {race.race_no}
-                                        </span>
-                                    </div>
-                                    {/* Status Indicator (Conditional) */}
-                                    {statusText && (
-                                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusClasses}`}>
-                                            {statusText}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Conditional Display: Results vs. Full Race Card */}
-                                {hasResults(race) ? (
-                                    // **1. DISPLAY RESULTS (UNCHANGED)**
-                                    <div className="pt-1">
-                                        
-                                        {/* 1ST PLACE ROW */}
-                                        <ResultsRow
-                                            place={1}
-                                            runnerNo={race.race_1st}
-                                            runnerName={race.runner_1st_name}
-                                            wOdds={race.race_1st_wodds}
-                                            pOdds={race.race_1st_podds}
-                                            isFirst={true}
-                                            isLast={false}
-                                        />
-                                        
-                                        {/* 2ND PLACE ROW */}
-                                        <ResultsRow
-                                            place={2}
-                                            runnerNo={race.race_2nd}
-                                            runnerName={race.runner_2nd_name}
-                                            pOdds={race.race_2nd_podds}
-                                            isFirst={false}
-                                            isLast={false}
-                                        />
-
-                                        {/* 3RD PLACE ROW */}
-                                        <ResultsRow
-                                            place={3}
-                                            runnerNo={race.race_3rd}
-                                            runnerName={race.runner_3rd_name}
-                                            pOdds={race.race_3rd_podds}
-                                            isFirst={false}
-                                            isLast={false}
-                                        />
-                                        
-                                        {/* 4TH PLACE ROW */}
-                                        <ResultsRow
-                                            place={4}
-                                            runnerNo={race.race_4th}
-                                            runnerName={race.runner_4th_name}
-                                            pOdds={null} // 4TH place has no odds
-                                            isFirst={false}
-                                            isLast={true}
-                                        /> 
-
-                                    </div>
-                                ) : (
-                                    // **2. DISPLAY FULL RUNNER LIST (COLUMN ORDER SWAPPED)**
-                                    <div className="pt-1">
-                                        
-                                        {/* 🛠️ UPDATED Column Labels: TIPS MOVED TO END */}
-                                        <div className="grid grid-cols-12 text-xs font-semibold uppercase text-gray-500 border-b pb-1 mb-1">
-                                            {/* 1. No. Form */}
-                                            <div className="col-span-2">No. Form</div> 
-                                            
-                                            {/* 2. Runner (Bar) Weight */}
-                                            <div className="col-span-4 pl-1">Runner (Bar) Weight</div>
-                                            
-                                            {/* 3. JOCKEY (NOW IN THIRD SPOT) */}
-                                            <div className="col-span-4 text-right">Jockey</div>
-                                            
-                                            {/* 4. TIPS (NOW IN LAST SPOT) */}
-                                            <div className="col-span-2 text-center">Tips</div>
-                                        </div>
-                                    
-                                        <div className="space-y-1"> 
-                                            {race.allRunners?.map((runner) => (
-                                                <div key={runner.runner_no} className="grid grid-cols-12 items-center text-sm border-b border-gray-100 last:border-b-0 py-0.5">
-                                                    
-                                                    {/* 1. RUNNER NO. + FORM - col-span-2 */}
-                                                    <div className="col-span-2 font-medium text-gray-800 pr-1">
-                                                        {/* Runner No. (Prominent) */}
-                                                        <span className="font-extrabold text-indigo-600 mr-1 text-sm">
-                                                            {runner.runner_no}.
-                                                        </span>
-                                                        
-                                                        {/* Form (Right justified within this block, smaller text) */}
-                                                        <span className="inline-block float-right text-gray-500 text-xs font-medium ">
-                                                            {getFormSlice(runner.runner_form)}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* 2. RUNNER NAME + BARRIER + WEIGHT - col-span-4 */}
-                                                    <div className="col-span-4 font-medium text-gray-800 truncate pl-1 pr-2">
-                                                        
-                                                        {/* Runner Name */}
-                                                        {runner.runner_name} 
-                                                        
-                                                        {/* Barrier (Smaller text) */}
-                                                        <span className="text-gray-500 font-normal ml-1 text-xs">
-                                                            ({runner.runner_barrier !== null ? runner.runner_barrier : 'Scr'})
-                                                        </span>
-                                                        
-                                                        {/* Weight (Raw Text) (Smaller text) */}
-                                                        <span className="text-gray-700 font-normal ml-2 text-xs">
-                                                            {runner.runner_weight || ''}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    {/* 3. JOCKEY - col-span-4 (MOVED HERE) */}
-                                                    <div className="col-span-4 text-gray-700 text-xs truncate text-right pr-1">
-                                                        {runner.runner_jockey || 'N/A'}
-                                                    </div>
-
-                                                    {/* 4. TIPSTER COUNT - col-span-2 (MOVED TO END) */}
-                                                    <div className="col-span-2 text-center">
-                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${runner.tipster_count && runner.tipster_count > 0 ? 'bg-indigo-100 text-indigo-700' : 'text-gray-300'}`}>
-                                                            {runner.tipster_count || 0}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Handle case where race has no results and no runners found */}
-                                        {(!race.allRunners || race.allRunners.length === 0) && (
-                                            <p className="text-sm italic text-gray-400 p-2">
-                                                No runner data available for this race.
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-
-                            </div>
-                        </li>
-                    );
-                })}
-            </ul>
         </div>
     );
 }

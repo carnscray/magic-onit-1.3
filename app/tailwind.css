@@ -135,6 +135,7 @@
 :root {
   --color-main: #336E5B;
   --color-second: #D3E8D7;  /*bright red #ae1111*/
+  --color-alert: #c34242;
 
   --color-main-dark: #336E5B;
   --color-main-medium: #23875D;
@@ -182,6 +183,10 @@
 
   .text-second {
     color: var(--color-second);
+  }
+
+  .text-alert {
+    color: var(--color-alert);
   }
 
   .text-cardtitle {

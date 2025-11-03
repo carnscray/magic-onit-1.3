@@ -1,6 +1,6 @@
 // app/root.tsx
 
-import type { LinksFunction } from "@remix-run/node"; // <-- Import the type
+import type { LinksFunction } from "@remix-run/node"; 
 import {
   Links,
   Meta,
@@ -10,8 +10,9 @@ import {
 } from "@remix-run/react";
 import "./tailwind.css";
 
-import Banner from "~/components/Banner";
-import Footer from "~/components/Footer";
+// 🛑 FIX: Changed default imports to NAMED IMPORTS {} to resolve "Element type is invalid: got undefined"
+import { Banner } from "~/components/Banner";
+import { Footer } from "~/components/Footer";
 
 // 🛑 FIX: Define the LinksFunction to correctly load external fonts/icons
 export const links: LinksFunction = () => [
@@ -24,10 +25,6 @@ export const links: LinksFunction = () => [
     // 2. Preconnect links (Good practice for performance)
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-
-    // Note: Since you are using 'import "./tailwind.css"', 
-    // you don't need to link it here, but it's often cleaner to do so.
-    // However, we respect your current import structure.
 ];
 
 
@@ -53,6 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 🛑 SYNTAX FIX: Ensured the component structure is perfectly clean to avoid the extra "}" error.
 export default function App() {
   return (
     // Wrap the entire application content in the sticky layout structure
@@ -66,9 +64,10 @@ export default function App() {
       </main>
       
       {/* 3. FOOTER */}
-      <main className="bg-white ">
+      {/* Note: Using a <div> instead of a <main> tag here is better for semantic HTML */}
+      <div className="bg-white "> 
           <Footer />
-      </main>
+      </div>
     </>
   );
 }
