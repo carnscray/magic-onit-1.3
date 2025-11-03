@@ -581,7 +581,7 @@ export default function RacedayDetail() {
 {/*---------------------------------------------------------------------------------------------*/}
             {/* 🛑 NEW: Responsive 3-Column Container */}
 {/*---------------------------------------------------------------------------------------------*/} 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
                 {/* 🚀 NextToJumpSummary */}
                 <NextToJumpSummary
@@ -614,18 +614,28 @@ export default function RacedayDetail() {
 {/*---------------------------------------------------------------------------------------------*/}
             {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
 {/*---------------------------------------------------------------------------------------------*/}
-            <div className="flex items-center space-x-3 mb-4">
-                <span className="material-symbols-outlined text-3xl text-gray-800">
-                    sports_score
-                </span>
+            {/* 🛑 MODIFIED: Header matching MyTipsSection: bg-main, text-white, rounded-t-2xl. Used justify-between to push the badge to the right. */}
+            <div className="flex items-center justify-between p-4 bg-main text-white rounded-t-2xl mt-10">
+                
+                {/* Left side: Icon and Heading */}
+                <div className="flex items-center space-x-3">
+                    <span className="material-symbols-outlined text-3xl">
+                        sports_score
+                    </span>
 
-                <h2 className="2xl font-heading font-semibold text-gray-800">
-                    Racecard
-                </h2>
-                <span className="flex items-center justify-center h-8 w-8 rounded-full bg-indigo-500 text-white text-base font-bold shadow-md flex-shrink-0">
+                    <h2 className="text-2xl font-heading font-semibold">
+                        Racecard
+                    </h2>
+                </div>
+
+                {/* Right side: Badge */}
+                <span className="flex items-center justify-center h-8 w-8 rounded-4px bg-white text-main text-base font-bold  flex-shrink-0">
                     {raceResults.length}
                 </span>
             </div>
+
+
+
 
             <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2 mb-10">
                 {raceResults.map((race, index) => {

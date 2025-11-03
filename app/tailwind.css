@@ -214,6 +214,9 @@
     color: var(--color-black-light);
   }
 
+    .text-mainlight {
+    color: var(--color-main-light);
+  }
 
 
   @media (min-width: 640px) {
