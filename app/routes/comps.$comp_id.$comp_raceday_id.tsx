@@ -14,7 +14,7 @@ import { Racecard } from "~/components/Racecard";
 import { TipsterHeader } from "../components/TipsterHeader"; 
 
 
-// --- TYPE DEFINITIONS (ALL EXPORTED) ---
+// --- TYPE DEFINITIONS (UPDATED) ---
 
 // Required for the loader's return type and the component's useLoaderData type
 export type RacedayHeaderData = {
@@ -38,7 +38,7 @@ export type RaceRunnerList = {
     tipster_count?: number;
 }[];
 
-// 💡 NEW TYPE: Defines a unique Sub Tip combination (Main Tip + Alt Tip)
+// Defines a unique Sub Tip combination (Main Tip + Alt Tip)
 export type SubTipCombo = {
     main_runner_no: number;
     main_runner_name: string;
@@ -54,10 +54,10 @@ export type RaceResultDetail = RaceResultData & {
     runner_3rd_name: string | null;
     runner_4th_name: string | null;
     allRunners?: RaceRunnerList; 
-    uniqueSubTips?: SubTipCombo[]; // <--- NEW FIELD
+    uniqueSubTips?: SubTipCombo[];
 };
 
-// ... (RaceResultData, RunnerDetail, TipDetail types remain unchanged) ...
+// Core race result data
 export type RaceResultData = {
     race_id: number;
     race_no: number;
@@ -86,15 +86,28 @@ export type TipDetail = {
     tip_alt_details: RunnerDetail;
 };
 
-// The combined shape of all data returned by the loader
+// 🛑 NEW TYPE: Defines the shape of a single leaderboard row (Points Focus)
+export type TipsterLeaderboardRow = {
+    tipster_id: number;
+    tipster_nickname: string;
+    tipster_fullname: string;
+    tipster_slogan: string | null;
+    tipster_mainpic: string | null;
+    points_total: number;
+};
+
+
+// The combined shape of all data returned by the loader (MODIFIED)
 export type RacedayTipsData = {
     racedayHeader: RacedayHeaderData;
     userTips: TipDetail[];
     raceResults: RaceResultDetail[];
-    // 🛑 ADDED: Field for the Tipster Header
     tipsterNickname: string | null; 
     compName: string;
+    // 🛑 ADDED: Leaderboard Data
+    pointsLeaderboard: TipsterLeaderboardRow[];
 };
+
 
 // --- LOADER FUNCTION: FETCHING RACEDAY DETAILS, RACES, AND USER TIPS (MODIFIED) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -116,14 +129,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const numericCompRacedayId = Number(compRacedayId);
     const numericCompId = Number(compId);
 
-    // 2. Fetch the user's tipster ID AND NICKNAME (MODIFIED)
+    // 2. Fetch the user's tipster ID AND NICKNAME (UNCHANGED)
     const { data: profile, error: profileError } = await supabaseClient
         .from("user_profiles")
-        .select("tipster:tipster_id(id, tipster_nickname)") // 🛑 FETCH NICKNAME
+        .select("tipster:tipster_id(id, tipster_nickname)")
         .eq("id", user.id)
         .single();
 
-    if (profileError || !profile || !profile.tipster) { // 🛑 CHECK FOR tipster EXISTENCE
+    if (profileError || !profile || !profile.tipster) {
         console.error("Error fetching tipster details:", profileError);
         throw new Response("User profile (tipster details) not found.", { status: 404 });
     }
@@ -243,7 +256,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     // tipCountMap: Map<RaceNo, Map<RunnerNo, Count>> (for consensus count)
     const tipCountMap = new Map<number, Map<number, number>>(); 
     
-    // 💡 NEW MAP: Stores unique (tip_main, tip_alt) combinations
     // uniqueSubTipsMap: Map<RaceNo, Set<string of "tip_main,tip_alt">>
     const uniqueSubTipsMap = new Map<number, Set<string>>();
 
@@ -281,12 +293,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
 
 
-    // 5. Build Race Results (MODIFIED to include uniqueSubTips)
+    // 5. Build Race Results (UNCHANGED)
     const raceResults: RaceResultDetail[] = await Promise.all(
         raceData.map(async (race) => {
             const hasFinished = race.race_1st !== null;
             let raceRunners: RaceRunnerList | undefined = undefined;
-            let uniqueSubTips: SubTipCombo[] | undefined = undefined; // Init the new field
+            let uniqueSubTips: SubTipCombo[] | undefined = undefined;
 
             if (!hasFinished) {
                 // Case 1: Race has NOT finished (FETCH ALL RUNNERS, ADD TIP COUNT, and GET UNIQUE SUB TIPS)
@@ -311,7 +323,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                     }));
                 }
                 
-                // --- B. Resolve Unique Sub Tips (NEW LOGIC) ---
+                // --- B. Resolve Unique Sub Tips (UNCHANGED) ---
                 const subComboSet = uniqueSubTipsMap.get(race.race_no);
                 
                 if (subComboSet && subComboSet.size > 0) {
@@ -359,7 +371,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                     runner_3rd_name: null, 
                     runner_4th_name: null,
                     allRunners: raceRunners,
-                    uniqueSubTips: uniqueSubTips, // <--- ATTACHED HERE
+                    uniqueSubTips: uniqueSubTips,
                 };
             }
             
@@ -413,7 +425,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
     // 6. Fetch current user's tips (UNCHANGED)
-    // ... (logic remains unchanged) ...
     const { data: userTipsRaw, error: tipsError } = await supabaseClient
         .from("tipster_tips_header")
         .select(
@@ -479,17 +490,37 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }));
 
 
-    // 8. Return all data
-    return json({ racedayHeader, userTips: tipsWithDetails, raceResults, tipsterNickname, compName } as RacedayTipsData);
+    // 🛑 NEW: 8. Fetch Leaderboard Data using the simplified RPC
+    const { data: leaderboardData, error: leaderboardError } = await supabaseClient
+        .rpc("get_comp_raceday_leaderboard", {
+            comp_raceday_id_in: numericCompRacedayId,
+        })
+        .returns<TipsterLeaderboardRow[]>(); 
+
+    let pointsLeaderboard: TipsterLeaderboardRow[] = [];
+    if (leaderboardError) {
+        console.error("Error fetching leaderboard data:", leaderboardError);
+        // pointsLeaderboard remains []
+    } else {
+        // Use the fetched data, ensuring it is an array
+        pointsLeaderboard = leaderboardData || [];
+    }
+    
+    // 9. Return all data (MODIFIED)
+    return json({ 
+        racedayHeader, 
+        userTips: tipsWithDetails, 
+        raceResults, 
+        tipsterNickname, 
+        compName, 
+        pointsLeaderboard // <<-- ADDED
+    } as RacedayTipsData);
 };
 
-{/*---------------------------------------------------------------------------------------------*/}
 // --- REACT COMPONENT: DISPLAYING DATA (UPDATED LAYOUT)
-{/*---------------------------------------------------------------------------------------------*/}
-
 export default function RacedayDetail() {
-    // 🛑 DESTRUCTURED: tipsterNickname is now available
-    const { racedayHeader, userTips, raceResults, tipsterNickname, compName } = useLoaderData<typeof loader>();
+    // 🛑 DESTRUCTURED: pointsLeaderboard is now available
+    const { racedayHeader, userTips, raceResults, tipsterNickname, compName, pointsLeaderboard } = useLoaderData<typeof loader>();
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-AU', {
@@ -507,22 +538,15 @@ export default function RacedayDetail() {
     // Find the index of the first race with no result.
     const nextToJumpIndex = raceResults.findIndex(race => !hasResults(race));
     
-    // Note: The ResultsRow and getFormSlice components/functions were moved 
-    // to the Racecard component file or a utility file.
-
     
     return (
         <div className="p-2 max-w-xl mx-auto lg:max-w-7xl lg:items-start">
             
-            {/* 🛑 ADDED: Tipster Header at the top of the component */}
             <TipsterHeader nickname={tipsterNickname} />
 
-{/*---------------------------------------------------------------------------------------------*/}
             {/* --- RACEDAY HEADER (FIXED LAYOUT) --- */}
-{/*---------------------------------------------------------------------------------------------*/}
-<div className="mb-8 p-4 border-b border-gray-200">
+            <div className="mb-8 p-4 border-b border-gray-200">
                 
-                {/* 🛑 WRAPPER FOR TOP ROW: Ensures Raceday Name and locref box are on one line */}
                 <div className="flex items-center space-x-3 mb-2 pl-1">
                     
                     {/* RACEDAY NAME (Now first) */}
@@ -556,31 +580,26 @@ export default function RacedayDetail() {
                     </Link>
                 </div>
             </div>
-{/*---------------------------------------------------------------------------------------------*/}
+            
             {/* NEXT TO JUMP AND MY TIPS (Grouped in 2 columns on large screen) */}
-{/*---------------------------------------------------------------------------------------------*/} 
             <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 h-auto lg:items-start">
 
-                {/* NextToJumpSummary */}
                 <NextToJumpSummary
                     racedayHeader={racedayHeader}
                     raceResults={raceResults}
                     nextToJumpIndex={nextToJumpIndex}
                 />
 
-                {/* MyTipsSection */} 
                 <MyTipsSection userTips={userTips} />
 
 
             </div>
-{/*---------------------------------------------------------------------------------------------*/}
+
             {/* --- LEADERBOARDS (Grouped in 2 columns on large screen) --- */}
-{/*---------------------------------------------------------------------------------------------*/}            
-            
             <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 mt-8 lg:items-start">
 
-                {/* Leaderboard Points */} 
-                <LeaderboardPoints />
+                {/* Leaderboard Points 🛑 PASSING NEW DATA */} 
+                <LeaderboardPoints leaderboardData={pointsLeaderboard} />
 
                 {/* Leaderboard Odds */} 
                 <LeaderboardOdds />
@@ -588,9 +607,7 @@ export default function RacedayDetail() {
             </div>
 
 
-{/*---------------------------------------------------------------------------------------------*/}
             {/* RACE CARD LIST AND RESULTS SECTION (Full Width) */}
-{/*---------------------------------------------------------------------------------------------*/}
             <Racecard 
                 raceResults={raceResults} 
                 nextToJumpIndex={nextToJumpIndex} 

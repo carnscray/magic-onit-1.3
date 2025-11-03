@@ -27,10 +27,10 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                     You have not submitted any tips for this raceday yet.
                 </p>
             ) : (
-                <div className="mb-10  border border-gray-100 border-t-0 rounded-b-2xl overflow-hidden shadow-lg pb-4">
+                <div className="divide-y divide-gray-200 mb-10  border border-gray-100 border-t-0 rounded-b-2xl overflow-hidden shadow-lg pb-4">
                     
                     {/* Table Header - Now 2 columns (RACE: 2/12, SELECTION: 10/12) */}
-                    <div className="grid grid-cols-12 text-xs font-semibold uppercase text-blackmain p-3 bg-mainlight">
+                    <div className="grid grid-cols-12 text-xs font-bold uppercase tracking-wider text-blackmain p-3 bg-mainlight">
                         <div className="col-span-2 text-left">RACE</div>
                         <div className="col-span-10 text-left">SELECTION</div>
                     </div>
@@ -68,7 +68,7 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                                             {/* Case 1: Sub Tip Exists (Apply Split Colors) */}
                                             
                                             {/* Main Tip in text-alert */}
-                                            <span className="font-semibold text-alert">
+                                            <span className="font-bold text-alert">
                                                 {mainRunnerNo}. {mainRunnerName}
                                             </span>
                                             
