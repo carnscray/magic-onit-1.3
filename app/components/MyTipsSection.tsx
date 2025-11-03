@@ -9,32 +9,30 @@ interface MyTipsSectionProps {
 
 export function MyTipsSection({ userTips }: MyTipsSectionProps) {
     return (
-        <div className="mt-10">
+        // 🛑 MODIFIED: Added w-full (mobile default) and lg:max-w-1/2 lg:mx-auto for centering on desktop
+        <div className="mt-10 w-full">
             
-            <div className="flex items-center space-x-3 mb-4">
-                <span className="material-symbols-outlined text-3xl text-gray-800">
+            <div className="flex items-center space-x-3 p-4 bg-main text-white rounded-t-2xl">
+                <span className="material-symbols-outlined text-3xl">
                     Checkbook
                 </span>
 
-                <h2 className="text-2xl font-heading font-semibold text-gray-800">
+                <h2 className="text-2xl font-heading font-semibold">
                     My Tips
                 </h2>
-                <span className="flex items-center justify-center h-8 w-8 rounded-full bg-green-500 text-white text-base font-bold shadow-md flex-shrink-0">
-                    {userTips.length}
-                </span>
+
             </div>
 
             {userTips.length === 0 ? (
-                <p className="text-gray-500 italic font-body mb-8 p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-500 italic font-body mb-8 p-4 bg-gray-50 rounded-b-2xl border border-gray-100 border-t-0 shadow-lg">
                     You have not submitted any tips for this raceday yet.
                 </p>
             ) : (
-                // 🛑 MODIFIED: Rounded to 2XL, changed border to gray-300
-                <div className="mb-10  overflow-hidden">
+                <div className="mb-10  border border-gray-100 border-t-0 rounded-b-2xl overflow-hidden shadow-lg">
                     
-                    {/* 🛑 MODIFIED: Removed bg-gray-50, updated border color */}
-                    <div className="grid grid-cols-12 text-xs font-semibold uppercase text-blackmain p-3 ">
-                        <div className="col-span-2 text-center">RACE</div>
+                    {/* Table Header - Now 2 columns (RACE: 2/12, SELECTION: 10/12) */}
+                    <div className="grid grid-cols-12 text-xs font-semibold uppercase text-blackmain p-3 bg-second">
+                        <div className="col-span-2 text-left">RACE</div>
                         <div className="col-span-10 text-left">SELECTION</div>
                     </div>
 
@@ -60,10 +58,10 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                         return (
                             <div
                                 key={index}
-                                className="grid grid-cols-12 items-center text-sm p-3 border border-main gap-4 rounded-full  hover:bg-mainlight transition duration-100 mb-1"
+                                className="grid grid-cols-12 items-center text-sm p-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-100"
                             >
                                 {/* 1. RACE - 2/12 width */}
-                                <div className="col-span-2 text-lg text-center font-extrabold text-main">
+                                <div className="col-span-2 text-lg font-extrabold text-main text-lef pl-4">
                                     {tip.race_no}
                                 </div>
                                 

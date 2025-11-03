@@ -564,7 +564,7 @@ export default function RacedayDetail() {
 
 
     return (
-        <div className="p-8 max-w-xl mx-auto lg:max-w-7xl">
+        <div className="p-2 max-w-xl mx-auto lg:max-w-7xl">
 {/*---------------------------------------------------------------------------------------------*/}
             {/* --- RACEDAY HEADER (UNCHANGED) --- */}
 {/*---------------------------------------------------------------------------------------------*/}
