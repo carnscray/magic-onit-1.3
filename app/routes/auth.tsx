@@ -1,3 +1,5 @@
+// app/routes/auth.tsx
+
 import { json } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/node";

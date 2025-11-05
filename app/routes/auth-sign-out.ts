@@ -1,3 +1,5 @@
+// app/routes/auth-sign-out.tsx
+
 import { redirect } from "@remix-run/node";
 import type { ActionFunctionArgs } from "@remix-run/node";
 

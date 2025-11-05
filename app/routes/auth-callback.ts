@@ -1,3 +1,5 @@
+// app/routes/auth-callback.tsx
+
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";

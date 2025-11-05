@@ -1,3 +1,5 @@
+// app/routes/_index.tsx
+
 import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Form,

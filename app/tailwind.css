@@ -1,20 +1,4 @@
-
-/* Import Outfit from Google Fonts — with 400, 500, 600 */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-
-/* Import Manrope from Google Fonts — with 300, 400, 500, 600, 700, 800 */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
-
-/* Import Poppins from Google Fonts — with 300, 400, 500, 600, 700 */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-/* Import Inter from Google Fonts — with 300, 400, 500, 600, 700, 800, 900 */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-/* Import Bricolage Grotesque from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@8..30,400;8..30,500;8..30,700;8..30,900&display=swap');
-
-
+/* app/tailwind.css */
 
 @tailwind base;
 @tailwind components;
