@@ -1,22 +1,24 @@
-// app/components/Banner.tsx (Trimmed for Display/Navigation Only)
+// app/components/Banner.tsx (Final Update: Nickname is a Link)
 
 import { Link } from "@remix-run/react"; 
-// Note: Removed 'Form' and 'useNavigation' as they are no longer needed.
+import type { RootUserData } from "~/root"; 
 
-// Using a NAMED EXPORT to match the import in root.tsx
-export function Banner() {
+interface BannerProps {
+    user: RootUserData; 
+}
+
+export function Banner({ user }: BannerProps) {
   
-  // Simplified classes for the icon links
   const iconLinkClasses = "text-white hover:text-indigo-200 transition duration-150 p-2";
 
   return (
     <header className="bg-gradient-custom shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
         
-        {/* 1. Brand/Home Link (Using the Chess Knight for now) */}
+        {/* 1. Brand/Home Link (Left Side) */}
         <nav className="flex items-center space-x-4">
 
-          {/* Competitions Icon (Kept for primary navigation visibility) */}
+          {/* Competitions Icon */}
           <Link 
             to="/comps" 
             className={iconLinkClasses}
@@ -32,18 +34,31 @@ export function Banner() {
         </nav>
 
         {/* 2. User Profile Link (Right Side) */}
-        <Link 
-          to="/profile/edit" // Placeholder URL
-          className={iconLinkClasses}
-          aria-label="Edit Profile"
-        >
-          <span 
-            className="material-symbols-outlined text-3xl"
-            style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 30" }}
-          >
-            account_circle
-          </span>
-        </Link>
+        <div className="flex items-center space-x-2"> 
+            
+            {/* 💡 CHANGE: Display Tipster Nickname wrapped in a Link to /comps */}
+            {user?.tipsterNickname && (
+                <Link 
+                    to="/comps" // Directs nickname click back to the competitions list
+                    className="text-sm font-semibold text-white mr-0  hover:text-mainlight transition duration-150"
+                >
+                    {user.tipsterNickname}
+                </Link>
+            )}
+
+            <Link 
+              to="/profile/edit" 
+              className={iconLinkClasses}
+              aria-label="Edit Profile"
+            >
+              <span 
+                className="material-symbols-outlined text-3xl"
+                style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 30" }}
+              >
+                account_circle
+              </span>
+            </Link>
+        </div>
         
       </div>
     </header>

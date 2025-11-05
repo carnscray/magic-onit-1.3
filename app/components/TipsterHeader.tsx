@@ -15,7 +15,10 @@ export function TipsterHeader({ nickname }: TipsterHeaderProps) {
 
     return (
         // The display logic remains exactly as you defined it
-        <div className="text-right flex justify-end items-center pr-4 pt-2">
+        
+        //HIDDEN - the entire thing for now - might add back later
+
+        <div className="hidden text-right flex justify-end items-center pr-4 pt-2">
             {/* Emoji People Icon */}
             <span 
                 className="material-symbols-outlined mr-1 text-xl text-main" 

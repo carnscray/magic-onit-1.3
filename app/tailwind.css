@@ -285,6 +285,10 @@
     background-color: var(--color-black-main);
   }
 
+  .bg-alert {
+    background-color: var(--color-alert);
+  }
+
   .bg-mainlight {
     background-color: var(--color-main-light);
   }

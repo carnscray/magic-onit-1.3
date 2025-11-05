@@ -2,10 +2,9 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
-// 🛑 FIX: Correct import for the TipsterHeader component
 import { TipsterHeader } from "../components/TipsterHeader"; 
 
-// --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS ---
+// --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS (UNCHANGED) ---
 export const loader = async ({ request }: LoaderFunctionArgs) => { 
   const { supabaseClient } = createSupabaseServerClient(request);
 
@@ -78,70 +77,86 @@ export default function Comps() {
   const { competitions, tipsterDetails } = useLoaderData<typeof loader>();
 
   return (
-    <div className="max-w-xl mx-auto lg:max-w-7xl">
+    <div className="p-2 max-w-xl mx-auto lg:max-w-7xl">
       
-      {/* 🛑 FIX: Use the reusable TipsterHeader component */}
       <TipsterHeader nickname={tipsterDetails.tipster_nickname} />
 
-      {/* MODIFIED: "My Comps" heading with chess_knight icon */}
-      <div className="flex items-center mb-4 pb-2 border-b border-gray-300">
-        {/* Chess Knight Icon */}
-        <span 
-          className="material-symbols-outlined mr-1 text-3xl text-main"
-          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 30" }}
-        >
-          chess_knight
-        </span>
+    {/* 💡 FIX: The entire section is now correctly structured and contained within the main div */}
+    <section className="my-12 rounded-2xl shadow-xl overflow-hidden"> 
         
-        {/* New H2 Text */}
-        <h2 className="text-2xl font-heading font-semibold text-blackmain">
-          My Comps:
-        </h2>
-      </div>
-
-      {competitions.length === 0 ? (
-        <p className="text-gray-500 italic font-body">
-          You are not currently part of any tipping competitions.
-        </p>
-      ) : (
-        <ul 
-          className="grid grid-cols-1 gap-6 lg:grid-cols-3"
-        >
-          {competitions.map((comp) => (
-            <li 
-              key={comp.id} 
-              className="p-4 bg-white  hover:bg-mainlight  rounded-full border border-main relative" 
-            >
-              
-              {/* --- TOP RIGHT: Icon and Tipster Count --- */}
-              <div 
-                className="absolute top-4 right-4 flex items-center space-x-1"
-              >
-                {/* Icon */}
-                <span className="material-symbols-outlined text-2xl text-main">
-                    emoji_people
+        {/* Header Styling */}
+        <div className="flex items-center justify-between space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
+            
+            {/* Left side: Icon and Title */}
+            <div className="flex items-center space-x-3">
+                <span className="material-symbols-outlined text-3xl">
+                    chess_knight
                 </span>
                 
-                {/* Number in a Circle */}
-                <span className="flex items-center justify-center h-8 w-8 rounded-full bg-second text-main text-xs font-bold ">
-                    {comp.tipster_count}
-                </span>
-              </div>
-              
-              {/* --- TOP LEFT: Comp Name --- */}
-              <Link 
-                to={`/comps/${comp.id}`} 
-                className="text-lg font-bold text-main active:text-second transition block pl-2 pr-16"
-              >
-                {comp.comp_name}
-              </Link>
-              
+                <h2 className="text-2xl font-heading font-semibold">
+                    My Comps 
+                </h2>
+            </div>
+            
+            {/* Right side: Competition Count Badge (FIXED: Using competitions.length) */}
+            <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white text-main text-base font-bold  flex-shrink-0">
+                {competitions.length}
+            </span>
+        </div>
+        
+        {/* Content Container (Matches the p-6 bg-white style used elsewhere) */}
+        <div className="p-6 bg-white">
+            {competitions.length === 0 ? (
+                <p className="text-gray-500 italic font-body">
+                    You are not currently part of any tipping competitions.
+                </p>
+            ) : (
+                <ul 
+                    className="grid grid-cols-1 gap-4 lg:grid-cols-3"
+                >
+                    {competitions.map((comp) => (
+                        <li 
+                            key={comp.id} 
+                            className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 hover:shadow-xl transition-shadow relative" 
+                        >
+                            <Link 
+                                to={`/comps/${comp.id}`} 
+                                className="block"
+                            >
+                                <div className="flex items-start justify-between">
+                                    {/* --- LEFT SIDE: Comp Name and Slogan --- */}
+                                    <div className="flex-grow min-w-0 pr-4">
+                                        {/* Comp Name (Primary Title) */}
+                                        <p className="text-xl font-heading font-bold text-main truncate"> 
+                                            {comp.comp_name}
+                                        </p>
+                                        
+                                        {/* Comp Slogan (Secondary Detail) */}
+                                        <p className="text-sm font-body text-gray-500 italic truncate mt-0.5"> 
+                                            {comp.comp_slogan || "A challenging competition awaits!"}
+                                        </p>
+                                    </div>
 
-              
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+                                    {/* --- RIGHT SIDE: Tipster Count Badge --- */}
+                                    <div className="flex items-center space-x-1 flex-shrink-0">
+                                        {/* Icon */}
+                                        <span className="material-symbols-outlined text-2xl text-main">
+                                            emoji_people
+                                        </span>
+                                        
+                                        {/* Number in a Circle (Badge) */}
+                                        <span className="flex items-center justify-center h-8 w-8 rounded-full bg-second text-main text-lg font-bold shadow-md">
+                                            {comp.tipster_count}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    </section>
+  </div>
   );
 }

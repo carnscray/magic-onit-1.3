@@ -1,41 +1,67 @@
-// Comp_RacedayLive.tsx (Updated with Banner Header and LIVE Badge)
+// Comp_RacedayLive.tsx (Updated with Date Range Filtering)
 
-import { Link } from "@remix-run/react"; 
+import CompRacedayCard from "~/components/Comp_RacedayCard"; 
 import type { RacedayData } from "./$comp_id"; 
 
-// Prop definition
+// Prop definition (UNCHANGED)
 type CompRacedayLiveProps = {
     racedays: RacedayData[];
 };
 
-// Helper to format the date (extracted with the JSX)
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-AU', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
-    });
+// Helper function to normalize a date to midnight for accurate comparison
+const startOfDay = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
 };
 
 export default function CompRacedayLive({ racedays }: CompRacedayLiveProps) {
     
-    // 💡 NEW LOGIC: Determine the background color for the LIVE badge
-    // Red if there are racedays (LIVE), Grey if there are none.
-    const liveBadgeClass = racedays.length > 0 
-        ? 'bg-red-600' // Red for LIVE
+    // ==========================================================
+    // 💡 LIVE FILTERING LOGIC
+    // ==========================================================
+    
+    // 1. MANUALLY SET REFERENCE DATE FOR TESTING (e.g., Nov 5, 2025)
+    // NOTE: For production, you would replace this with `new Date()`
+    const MANUAL_TODAY = new Date('2025-10-25'); 
+    const todayStart = startOfDay(MANUAL_TODAY);
+
+    // 2. Define the date window boundaries: Yesterday to Today + 3 Days
+    
+    // START BOUNDARY: Yesterday
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(todayStart.getDate() - 1); 
+
+    // END BOUNDARY: The 3rd day in the future (Today + 3 days)
+    const futureLimitStart = new Date(todayStart);
+    futureLimitStart.setDate(todayStart.getDate() + 3); 
+
+
+    // 3. Filter the racedays array
+    const liveRacedays = racedays.filter(raceday => {
+        // Convert the raceday string date to a Date object, normalized to start of day
+        const racedayDate = startOfDay(new Date(raceday.raceday_date));
+
+        // Filter: raceday date must be >= Yesterday AND <= Future Limit (Today + 3)
+        return racedayDate.getTime() >= yesterdayStart.getTime() && 
+               racedayDate.getTime() <= futureLimitStart.getTime();
+    });
+
+    // ==========================================================
+    // 4. Update Header Badges to use the filtered count
+    // ==========================================================
+    
+    const liveBadgeClass = liveRacedays.length > 0 
+        ? 'bg-alert' // Red for LIVE
         : 'bg-gray-500'; // Grey for inactive
         
     return (
-        // Added margin, border, shadow, and overflow-hidden for the banner effect
         <section className="my-12 rounded-2xl shadow-xl overflow-hidden">
             
-            {/* ========================================================== */}
-            {/* 🏁 RACEDAYS SECTION HEADER (UPDATED BANNER STYLE) 🏁 */}
-            {/* ========================================================== */}
-            
+            {/* ... Racedays Header (UNCHANGED) ... */}
             <div className="flex items-center justify-between space-x-3 p-4 bg-gradient-customalt text-white rounded-t-2xl">
                 
-                {/* Left side: Icon and Title (Now just "Racedays") */}
+                {/* Left side: Icon and Title */}
                 <div className="flex items-center space-x-3">
                     <span className="material-symbols-outlined text-3xl">
                         Newsmode
@@ -46,62 +72,36 @@ export default function CompRacedayLive({ racedays }: CompRacedayLiveProps) {
                     </h2>
                 </div>
                 
-                {/* 💡 CHANGE 1: Right side now contains the LIVE badge and the Raceday Count badge */}
+                {/* Right side: LIVE badge and Raceday Count badge */}
                 <div className="flex items-center space-x-2"> 
                     
-                    {/* LIVE Badge (Red Box with White Writing) */}
+                    {/* LIVE Badge 
                     <span className={`text-sm font-bold px-2 py-1 rounded-full text-white shadow-md ${liveBadgeClass}`}>
                         LIVE
                     </span>
 
-                    {/* Raceday Count Badge */}
+                    {/* Raceday Count Badge 💡 USES liveRacedays.length 
                     <span className="flex items-center justify-center h-8 w-8 rounded-full bg-white text-indigo-700 text-base font-bold shadow-md flex-shrink-0">
-                        {racedays.length}
-                    </span>
+                        {liveRacedays.length}
+                    </span>*/}
                 </div>
             </div>
             
             {/* Wrap the content in a padded white container (p-6 for spacing consistency) */}
             <div className="p-6 bg-white"> 
-                {racedays.length === 0 ? (
+                {/* 💡 CHECKS liveRacedays.length */}
+                {liveRacedays.length === 0 ? (
                     <p className="text-gray-500 italic font-body">
-                        This competition has no scheduled racedays yet.
+                        This competition has no scheduled racedays in the 5-day window.
                     </p>
                 ) : (
                     <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {racedays.map((raceday) => (
-                            <li 
+                        {/* 💡 MAPS OVER liveRacedays */}
+                        {liveRacedays.map((raceday) => (
+                            <CompRacedayCard 
                                 key={raceday.comp_raceday_id} 
-                                className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 hover:shadow-xl transition-shadow"
-                            >
-                                <Link to={`${raceday.comp_raceday_id}`}>
-                                    <div className="flex justify-between items-start">
-                                        
-                                        {/* --- LEFT SIDE: Raceday Details --- */}
-                                        <div>
-                                            <p className="text-sm font-heading font-semibold text-gray-500 uppercase">
-                                                {raceday.racetrack_name}
-                                            </p>
-                                            <p className="text-lg font-heading font-bold text-gray-800">
-                                                {raceday.raceday_name}
-                                            </p>
-                                            <p className="text-sm font-body text-gray-500 mt-1">
-                                                {formatDate(raceday.raceday_date)}
-                                            </p>
-                                        </div>
-
-                                        {/* --- RIGHT SIDE: LocRef and Race Count --- */}
-                                        <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
-                                            <span className="text-sm font-bold text-gray-600">
-                                                {raceday.racetrack_locref}
-                                            </span>
-                                            <span className="flex items-center justify-center h-8 w-8 bg-pink-500 text-white text-base font-bold shadow-md">
-                                                {raceday.race_count}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </li>
+                                raceday={raceday} 
+                            />
                         ))}
                     </ul>
                 )}

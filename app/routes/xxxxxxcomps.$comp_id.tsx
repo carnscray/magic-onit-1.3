@@ -1,4 +1,4 @@
-// app/routes/comps.$comp_id._layout.tsx
+// app/routes/comps.$comp_id.tsx
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
@@ -106,12 +106,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 // --- REACT COMPONENT: DISPLAYING DATA (UPDATED) ---
 export default function CompHome() {
+  // 💡 DESTRUCTURE tipsterNickname
   const { compName, tipsters, racedays, tipsterNickname } = useLoaderData<typeof loader>();
   
   return (
     <div className="p-2 max-w-xl mx-auto lg:max-w-7xl"> 
       
-      {/* PLACEMENT: TipsterHeader at the very top */}
+      {/* 💡 PLACEMENT: TipsterHeader at the very top */}
       <TipsterHeader nickname={tipsterNickname} />
       
       <h1 className="text-3xl font-heading font-extrabold text-main border-b pt-4 pb-2 pl-4">
@@ -120,15 +121,12 @@ export default function CompHome() {
 
       <CompRacedayLive racedays={racedays} /> 
       
+
+
       <CompTipsters tipsters={tipsters} />
       
-      {/* 💡 FIX: Pass the racedays prop to CompRacedayPast */}
-      <CompRacedayPast racedays={racedays} /> 
+      <CompRacedayPast />
 
-      {/* The Outlet component renders the child route */}
-      <div className="mt-12 pt-8 ">
-        <Outlet />
-      </div>
 
     </div>
   );
