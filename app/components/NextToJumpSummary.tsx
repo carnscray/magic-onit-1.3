@@ -4,7 +4,7 @@
 import { 
     RaceResultDetail, 
     RacedayHeaderData,
-    SubTipCombo // 💡 NEW IMPORT
+    SubTipCombo
 } from "~/routes/comps.$comp_id.$comp_raceday_id";
 
 // Define props for the component
@@ -25,7 +25,6 @@ export function NextToJumpSummary({
     
     // Case 1: All races are complete
     if (nextToJumpIndex === -1) {
-        // 🛑 MODIFIED: Updated completed state styling
         return (
             <div className="p-4 bg-white rounded-2xl shadow-lg border border-green-300">
                 <p className="font-heading font-extrabold text-xl text-main flex items-center space-x-3">
@@ -49,7 +48,6 @@ export function NextToJumpSummary({
     // Get data for the summary
     const runners = nextRace.allRunners || [];
     const uniqueSubTips = nextRace.uniqueSubTips || []; 
-    // const runnerCount = runners.length || '??'; // Removed as requested
     const raceNotes = nextRace.race_notes || 'No special notes or prize money details available.';
     
     // Determine the max tip count to scale the visual bar correctly
@@ -59,7 +57,6 @@ export function NextToJumpSummary({
 
 
     return (
-        // 🛑 MODIFIED: New wrapper for consistent shadow/border
         <div className="shadow-lg rounded-2xl overflow-hidden">
             
 
@@ -85,11 +82,8 @@ export function NextToJumpSummary({
             {/* Content Container */}
             <div className="divide-y divide-greymain bg-white rounded-b-2xl pb-8">
                 
-                {/* 🛑 MODIFIED: Full-width Race Details Bar */}
-                {/* Added bg-second and used -mx-4 to go edge-to-edge. Changed internal padding. */}
                 <div className="flex items-center justify-between bg-mainlight -mx-4 px-4 py-3">
-
-                <p className="text-sm font-body text-blackmain text-left whitespace-nowrap overflow-hidden text-ellipsis pl-4 pr-4">
+                    <p className="text-sm font-body text-blackmain text-left whitespace-nowrap overflow-hidden text-ellipsis pl-4 pr-4">
                         {raceNotes}
                     </p>
                 </div>
@@ -97,30 +91,42 @@ export function NextToJumpSummary({
                 
                 {/* --- TIPSTER MARKET CONSENSUS SECTION --- */}
                 {runners.length > 0 && (
-                    // 🛑 MODIFIED: border-red-200 changed to border-gray-200
                     <div className="mt-0 pt-4 ">
-                        {/* 🛑 MODIFIED: Title/Icon color changed to text-main */}
-                        <h4 className="text-md font-heading font-bold text-main mb-2 flex items-center space-x-1 pl-4">
-                            <span className="material-symbols-outlined text-main text-xl">
-                                bar_chart
-                            </span>
-                            <span>Tipster Market Consensus</span>
-                        </h4>
+                        
+                        {/* 🛑 MODIFIED: Replaced H4 with a flex row to add "Tips" label */}
+                        <div className="flex justify-between items-center mb-2 pl-4 pr-6"> {/* pr-6 matches list items */}
+                            
+                            {/* Left Side: Title */}
+                            <h4 className="text-md font-heading font-bold text-main flex items-center space-x-1">
+                                <span className="material-symbols-outlined text-main text-xl">
+                                    bar_chart
+                                </span>
+                                <span>Tipster Market Consensus</span>
+                            </h4>
+
+                            {/* Right Side: "Tips" label, aligned with count column */}
+                            <div className="w-4/12 flex items-center space-x-2">
+                                {/* This div acts as a spacer, matching the bar's "flex-grow" */}
+                                <div className="h-2 flex-grow"></div> 
+                                
+                                <span className="font-bold text-xs flex-shrink-0 w-4 text-right text-main">
+                                    Tips
+                                </span>
+                            </div>
+                        </div>
+                        {/* --- END MODIFICATION --- */}
 
                         <div className="space-y-2">
                             {runners
-                                // 🛑 NEW: Sort runners by tip count (descending)
                                 .sort((a, b) => (b.tipster_count || 0) - (a.tipster_count || 0))
                                 .map(runner => {
                                 const tipCount = runner.tipster_count || 0;
-                                // Calculate percentage width for the visual bar
                                 const tipPercentage = maxTipCount > 0 ? (tipCount / maxTipCount) * 100 : 0;
                                 
                                 return (
                                     <div key={runner.runner_no} className="flex items-center text-sm pl-4 pr-6 ">
                                         {/* Runner Name/No Column */}
                                         <div className="w-8/12 flex items-center pr-2">
-                                            {/* 🛑 MODIFIED: Runner No color changed to text-main */}
                                             <span className="font-extrabold text-main mr-1 text-sm w-5 text-right flex-shrink-0">
                                                 {runner.runner_no}.
                                             </span>
@@ -132,7 +138,6 @@ export function NextToJumpSummary({
                                         {/* Tip Count & Bar Column */}
                                         <div className="w-4/12 flex items-center space-x-2">
                                             
-                                            {/* 🛑 MODIFIED: Bar Track/Fill colors changed to gray-100/bg-main */}
                                             <div className="h-2 flex-grow bg-gray-100 rounded-full overflow-hidden">
                                                 <div 
                                                     className="h-full bg-main rounded-full transition-all duration-300 ease-out" 
@@ -141,7 +146,7 @@ export function NextToJumpSummary({
                                             </div>
                                             
                                             {/* Count */}
-                                            <span className={`font-bold text-xs flex-shrink-0 w-4 text-right ${tipCount === maxTipCount && tipCount > 0 ? 'text-main' : 'text-mainlight'}`}>
+                                            <span className={`font-bold text-xs flex-shrink-0 w-4 text-right ${tipCount === 0 ? 'text-mainlight' : 'text-main'}`}>
                                                 {tipCount}
                                             </span>
                                         </div>
@@ -154,10 +159,8 @@ export function NextToJumpSummary({
                 
                 {/* --- UNIQUE SUB TIPS SECTION --- */}
                 {uniqueSubTips.length > 0 && (
-                    // 🛑 MODIFIED: border-red-200 changed to border-gray-200
                     <div className="mt-4 pt-4 pl-4 pr-4">
                         
-                        {/* 🛑 NEW: Title for Sub-Tips section */}
                         <h4 className="text-md font-heading font-bold text-main mb-2 flex items-center space-x-1">
                             <span className="material-symbols-outlined text-main text-xl">
                                 Sync_Alt
@@ -165,7 +168,6 @@ export function NextToJumpSummary({
                             <span>Substitutions</span>
                         </h4>
 
-                        {/* 🛑 MODIFIED: bg-red-100/border-red-200 changed to gray-100/gray-200 */}
                         <ul className="text-sm space-y-1 bg-mainlight p-3 rounded-lg border border-gray-200">
                             {uniqueSubTips.map((combo, index) => (
                                 <li key={index} className="text-main">

@@ -1,26 +1,25 @@
 // app/components/Racecard.tsx
 
-// 💡 Ensure this type is available, either by importing it correctly
-// or by defining a shared type file.
-import type { RaceResultDetail } from "~/routes/comps.$comp_id.$comp_raceday_id"; 
+import type { 
+    RaceResultDetail, 
+    PlacedRunner // 💡 NEW: Import PlacedRunner type
+} from "~/routes/comps.$comp_id.$comp_raceday_id"; 
 
-// --- TEMPORARY STUBS TO RESOLVE RENDERING ERROR ---
-// These functions and component must eventually be imported from a shared utility 
-// or component file to keep Racecard.tsx clean.
+// --- STUBS (Modified) ---
 
-// 1. Stub for hasResults (Logic copied from original route file)
+// 1. 💡 FIXED: hasResults now checks the 'results' array
 const hasResults = (race: RaceResultDetail): boolean => {
-    return race.race_1st !== null;
+    return race.results && race.results.length > 0;
 }
 
-// 2. Stub for getFormSlice (Logic copied from original route file)
+// 2. Stub for getFormSlice (Unchanged)
 const getFormSlice = (form: string | null): string => {
     if (!form) return '';
     // Returns the last 5 characters of the form string
     return form.slice(-5); 
 };
 
-// Helper to get ordinal suffix (1 -> 1st, 2 -> 2nd, 3 -> 3rd, 4 -> 4th)
+// 3. Stub for getOrdinal (Unchanged)
 const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"];
     const v = n % 100;
@@ -28,7 +27,7 @@ const getOrdinal = (n: number) => {
 };
 
 
-// 3. Stub for ResultsRow Component (MODIFIED FOR HEIGHT AND COLUMN STRUCTURE)
+// 4. Stub for ResultsRow Component (Unchanged, it's already compatible)
 const ResultsRow = ({
     place, runnerNo, runnerName, wOdds, pOdds, isFirst, isLast
 }: {
@@ -41,13 +40,8 @@ const ResultsRow = ({
     isLast: boolean
 }) => {
     
-    // Get ordinal text (e.g., "1st")
     const placeText = getOrdinal(place);
-    
-    // Determine the classes based on place
     const placeClasses = isFirst ? 'font-bold text-blackmain' : 'text-greymain';
-    
-    // Highlight 1st Row
     const rowBackgroundClass = isFirst ? 'bg-second' : '';
 
     // Add '$' and Check for 'NTD' (0.00)
@@ -56,7 +50,8 @@ const ResultsRow = ({
         : '';
 
     let formattedPOdds = '';
-    if (place <= 3 && pOdds !== null) {
+    // 💡 FIX: Also show podds for 1st place
+    if (place <= 3 && pOdds !== null) { 
         if (pOdds === 0.00) {
             formattedPOdds = 'NTD';
         } else {
@@ -65,68 +60,56 @@ const ResultsRow = ({
     }
 
     return (
-        // 💡 CHANGE 1: Increased row height by changing py-1 to py-2
         <div 
             className={`grid grid-cols-12 items-center text-sm  py-3 '} ${rowBackgroundClass}`}
         >
-            
-            {/* 1. Place Text - col-span-2 (Now only contains placeText, isolated) */}
+            {/* 1. Place Text */}
             <div className="col-span-2 pl-6">
-                {/* Ordinal Place Text */}
                 <span className={`font-semibold text-sm uppercase ${placeClasses}`}>
                     {placeText}
                 </span>
             </div>
             
-            {/* 2. Runner No. & Runner Name - col-span-6 (Runner No. moved here) */}
+            {/* 2. Runner No. & Runner Name */}
             <div className="col-span-6 truncate text-blackmain text-sm font-medium flex items-center space-x-1">
-                {/* Runner Number */}
                 {runnerNo !== null && <span className="font-extrabold text-sm text-blackmain pr-2">{runnerNo}.</span>}
-                {/* Runner Name */}
                 <span className="truncate">{runnerName}</span> 
             </div>
             
-            {/* 3. Win Odds - col-span-2 (Now uses formattedWOdds with '$') */}
+            {/* 3. Win Odds */}
             <div className="col-span-2 text-right text-sm  text-blackmain pr-2">
                 {formattedWOdds}
             </div>
 
-            {/* 4. Place Odds - col-span-2 (Now uses formattedPOdds with '$' or 'NTD') */}
+            {/* 4. Place Odds */}
             <div className="col-span-2 text-right text-sm  text-blackmain pr-6">
                 {formattedPOdds}
             </div>
         </div>
     );
 }
-
-// --- END OF TEMPORARY STUBS ---
+// --- END OF STUBS ---
 
 
 interface RacecardProps {
-    raceResults: RaceResultDetail[];
+    raceResults: RaceResultDetail[]; // This now uses the NEW RaceResultDetail type
     nextToJumpIndex: number; 
 }
 
-// The export is correct.
 export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
     return (
         <div className="w-full">
             {/* 🏁 RACE LIST AND RESULTS SECTION 🏁 */}
             {/* Header (UNCHANGED) */}
             <div className="flex items-center justify-between p-4 bg-blackmain text-white rounded-t-2xl mt-10">
-                
-                {/* Left side: Icon and Heading */}
                 <div className="flex items-center space-x-3">
                     <span className="material-symbols-outlined text-3xl">
                         List_Alt
                     </span>
-
                     <h2 className="text-2xl font-heading font-semibold">
                         Racecard
                     </h2>
                 </div>
-
-                {/* Right side: Badge */}
                 <span className="flex items-center justify-center h-8 w-8 rounded-4px bg-white text-blackmain text-base font-bold  flex-shrink-0">
                     {raceResults.length}
                 </span>
@@ -139,6 +122,7 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                     let statusText: 'RESULT' | 'NEXT TO JUMP' | null = null;
                     let statusClasses = '';
                     
+                    // 💡 MODIFIED: Using new hasResults function
                     if (hasResults(race)) { 
                         statusText = 'RESULT';
                         statusClasses = 'bg-green-100 text-green-800';
@@ -161,27 +145,20 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                             key={index}
                             className="p-0 bg-white shadow-lg rounded-lg border border-gray-100"
                         >
-                            {/* Removed space-y-3 to reduce gap between header and first result */}
                             <div className="flex flex-col"> 
                                 
-                                {/* Race Header: Number, Notes, Status Badge */}
+                                {/* Race Header (Unchanged) */}
                                 <div className="flex items-center justify-between border-b p-2 bg-mainlight p-2">
-                                    
-                                    {/* Left Side: Race Number and Race Notes */}
                                     <div className="flex items-center space-x-3 min-w-0 overflow-hidden">
-                                        {/* Race No Box */}
                                         <span className="text-xl font-heading font-extrabold text-blackmain px-2 py-0.5 bg-white border-2 border border-black flex-shrink-0">
                                             {race.race_no}
                                         </span>
-                                        {/* Race Notes */}
                                         {race.race_notes && (
                                             <span className="text-sm text-blackmain truncate mr-4">
                                                 {race.race_notes}
                                             </span>
                                         )}
                                     </div>
-                                    
-                                    {/* Status Indicator */}
                                     {statusText && (
                                         <span className={`text-xs font-bold px-3 py-1 flex-shrink-0 rounded-full ${statusClasses}`}>
                                             {statusText}
@@ -189,52 +166,27 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                                     )}
                                 </div>
 
-                                {/* Conditional Display: Results vs. Full Race Card */}
+                                {/* 💡 MODIFIED: Conditional Display Logic */}
                                 {hasResults(race) ? (
-                                    // **1. DISPLAY RESULTS (USING UPDATED ResultsRow)**
-                                    // p-0 allows the highlight to span full width
+                                    // **1. DISPLAY RESULTS (NOW DYNAMIC) **
                                     <div className="p-0 divide-y divide-greymain"> 
                                         
-                                        {/* 1ST PLACE ROW */}
-                                        <ResultsRow
-                                            place={1}
-                                            runnerNo={race.race_1st}
-                                            runnerName={race.runner_1st_name}
-                                            wOdds={race.race_1st_wodds} 
-                                            pOdds={race.race_1st_podds} 
-                                            isFirst={true}
-                                            isLast={false}
-                                        />
-                                        
-                                        {/* 2ND PLACE ROW */}
-                                        <ResultsRow
-                                            place={2}
-                                            runnerNo={race.race_2nd}
-                                            runnerName={race.runner_2nd_name}
-                                            pOdds={race.race_2nd_podds} 
-                                            isFirst={false}
-                                            isLast={false}
-                                        />
-
-                                        {/* 3RD PLACE ROW */}
-                                        <ResultsRow
-                                            place={3}
-                                            runnerNo={race.race_3rd}
-                                            runnerName={race.runner_3rd_name}
-                                            pOdds={race.race_3rd_podds}
-                                            isFirst={false}
-                                            isLast={false}
-                                        />
-                                        
-                                        {/* 4TH PLACE ROW */}
-                                        <ResultsRow
-                                            place={4}
-                                            runnerNo={race.race_4th}
-                                            runnerName={race.runner_4th_name}
-                                            pOdds={null} 
-                                            isFirst={false}
-                                            isLast={true} 
-                                        /> 
+                                        {/* Map over the new race.results array */}
+                                        {race.results
+                                            .sort((a: PlacedRunner, b: PlacedRunner) => a.position - b.position)
+                                            .map((result: PlacedRunner, index: number) => (
+                                                <ResultsRow
+                                                    key={result.id}
+                                                    place={result.position}
+                                                    runnerNo={result.runner_no}
+                                                    runnerName={result.runner_name}
+                                                    wOdds={result.wodds} 
+                                                    pOdds={result.podds} 
+                                                    isFirst={result.position === 1}
+                                                    isLast={index === race.results.length - 1}
+                                                />
+                                            ))
+                                        }
 
                                     </div>
                                 ) : (
@@ -252,17 +204,15 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                                             {displayedRunners.map((runner) => (
                                                 <div key={runner.runner_no} className="grid grid-cols-12 items-center text-sm  last:border-b-0 py-0.5">
                                                     
-                                                    {/* 1. RUNNER NO. - col-span-2 */}
+                                                    {/* 1. RUNNER NO. */}
                                                     <div className="col-span-2 font-medium text-gray-800 pr-1">
                                                         <span className="font-extrabold text-blackmain mr-1 text-lg pl-6">
                                                             {runner.runner_no}.
                                                         </span>
                                                     </div>
 
-                                                    {/* 2. RUNNER NAME + DETAILS - col-span-8 */}
+                                                    {/* 2. RUNNER NAME + DETAILS */}
                                                     <div className="col-span-8 font-medium text-blackmain pl-0 pr-2">
-                                                        
-                                                        {/* Row 1: Runner Name + Barrier */}
                                                         <div className="flex items-baseline">
                                                             <span className="text-blackmain ">
                                                                 {runner.runner_name} 
@@ -271,8 +221,6 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                                                                 ({runner.runner_barrier !== null ? runner.runner_barrier : 'Scr'})
                                                             </span>
                                                         </div>
-
-                                                        {/* Row 2: Form, Jockey, and Weight */}
                                                         <div className="flex items-center space-x-3 text-xs text-greymain font-normal mt-0.5">
                                                             <span className="truncate">
                                                                 <span className=" mr-1">F:</span>
@@ -288,7 +236,7 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* 3. TIPSTER COUNT - col-span-2 */}
+                                                    {/* 3. TIPSTER COUNT */}
                                                     <div className="col-span-2 text-center">
                                                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${runner.tipster_count && runner.tipster_count > 0 ? 'bg-second text-main' : 'text-greymain'}`}>
                                                             {runner.tipster_count || 0}

@@ -95,7 +95,8 @@ const LeaderboardOdds: React.FC<LeaderboardOddsProps> = ({ leaderboardData, curr
             {/* Header: bg-main, text-white, rounded-t-2xl */}
             <div className="flex items-center space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
                 <span className="material-symbols-outlined text-3xl">
-                    price_change
+                    Rewarded_Ads
+
                 </span>
                 <h2 className="text-2xl font-heading font-semibold">
                     Leaderboard Odds

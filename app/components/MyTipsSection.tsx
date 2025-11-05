@@ -11,15 +11,22 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
     return (
         <div className="w-full">
             
-            <div className="flex items-center space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
+<div className="flex items-center justify-between p-4 bg-gradient-custom text-white rounded-t-2xl">
+                
+                {/* Left side: Icon and Title */}
+                <div className="flex items-center space-x-3">
+                    <span className="material-symbols-outlined text-3xl">
+                        List
+                    </span>
+                    <h2 className="text-2xl font-heading font-semibold">
+                        My Tips
+                    </h2>
+                </div>
+
+                {/* Right side: Edit Icon */}
                 <span className="material-symbols-outlined text-3xl">
-                    Checkbook
+                    edit_square
                 </span>
-
-                <h2 className="text-2xl font-heading font-semibold">
-                    My Tips
-                </h2>
-
             </div>
 
             {userTips.length === 0 ? (
