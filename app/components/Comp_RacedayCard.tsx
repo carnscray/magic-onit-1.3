@@ -1,4 +1,4 @@
-// app/components/Comp_RacedayCard.tsx (Final Live Card Layout with Status Badge)
+// app/components/Comp_RacedayCard.tsx
 
 import { Link } from "@remix-run/react"; 
 import type { RacedayData } from "../routes/comps.$comp_id"; 
@@ -77,26 +77,29 @@ export default function CompRacedayCard({ raceday }: CompRacedayCardProps) {
                     {/* 2. Main Details Container */}
                     <div className="flex-grow min-w-0 flex flex-col justify-start">
                         
-                        {/* 2a. TOP ROW: Raceday Name (Left) and Status Badge (Right) */}
-                        <div className="flex justify-between items-start mb-1">
-                            {/* Raceday Name (text-xl, Bold) */}
-                            <p className="text-lg font-heading font-bold text-main truncate mr-2"> 
-                                {raceday.raceday_name}
-                            </p>
-                            
-                            {/* 💡 STATUS BADGE (Top Right Corner) */}
-                            <span className={`text-xs font-bold uppercase px-3 py-1 rounded-full flex-shrink-0 ${status.style}`}>
-                                {status.text}
-                            </span>
-                        </div>
+                        {/* ------------------- MODIFICATION START ------------------- */}
+
+                        {/* 2a. TOP ROW: Raceday Name (Left) */}
+                        {/* Removed 'truncate', added 'whitespace-normal' and 'break-words' */}
+                        <p className="text-lg font-heading font-bold text-main whitespace-normal break-words"> 
+                            {raceday.raceday_name}
+                        </p>
                         
-                        {/* 2b. BOTTOM ROW: Track Name - Date */}
-                        <p className="text-sm font-heading text-blackmain uppercase truncate mt-0"> 
+                        {/* 2b. MIDDLE ROW: Track Name - Date */}
+                        <p className="text-sm font-heading text-blackmain uppercase truncate mt-1"> 
                             {raceday.racetrack_name}
                             <span className="font-body font-normal ml-1"> 
                                 - {formatDate(raceday.raceday_date)}
                             </span>
                         </p>
+
+                        {/* 2c. 💡 NEW BOTTOM ROW: Status Badge (Right-aligned) */}
+                        <div className="flex justify-end w-full mt-2">
+                            <span className={`text-xs font-bold uppercase px-3 py-1 rounded-full flex-shrink-0 ${status.style}`}>
+                                {status.text}
+                            </span>
+                        </div>
+                        {/* -------------------- MODIFICATION END -------------------- */}
                     </div>
                 </div>
             </Link>

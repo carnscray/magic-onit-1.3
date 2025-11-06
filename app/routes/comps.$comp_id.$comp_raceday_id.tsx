@@ -66,9 +66,6 @@ export type RaceResultDetail = {
     uniqueSubTips?: SubTipCombo[]; // For "Next to Jump"
 };
 
-// This type is no longer used for race results
-// export type RaceResultData = { ... };
-
 export type RunnerDetail = {
     runner_no: number; 
     runner_name: string;
@@ -101,7 +98,8 @@ export type RacedayTipsData = {
     tipsterNickname: string | null; 
     compName: string;
     leaderboard: TipsterLeaderboardEntry[]; 
-    tipsterId: number; // Added tipsterId (was missing from your type)
+    tipsterId: number;
+    userRole: string; // <-- 💡 ADDED userRole
 };
 
 // --- LOADER FUNCTION (REFACTORED) ---
@@ -122,10 +120,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const numericCompRacedayId = Number(compRacedayId);
     const numericCompId = Number(compId);
     
-    // 2. Fetch the user's tipster ID AND NICKNAME 
+    // 2. 💡 MODIFIED: Fetch user's tipster ID, NICKNAME, and ROLE
     const { data: profile, error: profileError } = await supabaseClient
         .from("user_profiles")
-        .select("tipster:tipster_id(id, tipster_nickname)")
+        .select(`
+            user_role, 
+            tipster:tipster_id(id, tipster_nickname)
+        `)
         .eq("id", user.id)
         .single();
         
@@ -136,6 +137,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     
     const tipsterId = profile.tipster.id;
     const tipsterNickname = profile.tipster.tipster_nickname;
+    const userRole = profile.user_role; // <-- 💡 ADDED userRole
 
     // Fetch the Competition Name
     const { data: compDetails, error: compError } = await supabaseClient
@@ -172,7 +174,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 )
             )
             `
-        ) // <-- REFACTORED: Removed old race_1st, etc. columns
+        ) 
         .eq("id", numericCompRacedayId)
         .maybeSingle();
 
@@ -194,7 +196,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     // Process all races to extract basic details
     const rawRaces = day.racecard_race || [];
-    // This is now just the base race info
     const raceData = rawRaces
         .map(race => ({
             race_id: race.id,
@@ -290,13 +291,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 return { 
                     ...race, 
                     results: finalResults,
-                    allRunners: undefined, // No need for full runner list
+                    allRunners: undefined, 
                     uniqueSubTips: undefined,
                 };
             }
             
             // Case 2: Race has NOT finished. 
-            // Run the "Next to Jump" logic as before.
             let raceRunners: RaceRunnerList | undefined = undefined;
             let uniqueSubTips: SubTipCombo[] | undefined = undefined;
 
@@ -353,10 +353,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 }
             }
             
-            // Return for non-finished race
             return { 
                 ...race, 
-                results: [], // Empty results array
+                results: [], 
                 allRunners: raceRunners,
                 uniqueSubTips: uniqueSubTips,
             };
@@ -365,7 +364,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     // --- END REFACTORED STEP 5 ---
 
 
-// 6. Fetch current user's tips 
+    // 6. Fetch current user's tips 
     const { data: userTipsRaw } = await supabaseClient
         .from("tipster_tips_header")
         .select(`
@@ -381,7 +380,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         
     let userTipsRawData: Omit<TipDetail, 'tip_main_details' | 'tip_alt_details'>[] = [];
 
-    // --- MODIFICATION: Fixed typo 'tipter_tips_detail' -> 'tipster_tips_detail' ---
+    // --- 💡 MODIFICATION: Fixed typo 'tipter_tips_detail' -> 'tipster_tips_detail' ---
     if (userTipsRaw && userTipsRaw.tipster_tips_detail) {
         userTipsRawData = userTipsRaw.tipster_tips_detail.map(tip => ({
             race_no: tip.race_no,
@@ -389,7 +388,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
             tip_alt: tip.tip_alt,
         }));
     }
-
+    // --- END MODIFICATION ---
 
     userTipsRawData.sort((a, b) => a.race_no - b.race_no);
 
@@ -440,7 +439,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         leaderboard = combinedLeaderboardData || [];
     }
     
-    // 9. Return all data 
+    // 9. 💡 MODIFIED: Return all data + userRole
     return json({ 
         racedayHeader, 
         userTips: tipsWithDetails, 
@@ -448,13 +447,24 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         tipsterNickname, 
         compName, 
         leaderboard,
-        tipsterId // Pass tipsterId for leaderboard
+        tipsterId,
+        userRole // <-- 💡 ADDED userRole
     } as RacedayTipsData, { headers });
 };
 
 // --- REACT COMPONENT: DISPLAYING DATA (REFACTORED) ---
 export default function RacedayDetail() {
-    const { racedayHeader, userTips, raceResults, tipsterNickname, compName, leaderboard, tipsterId } = useLoaderData<typeof loader>();
+    // 💡 MODIFIED: Destructure userRole
+    const { 
+        racedayHeader, 
+        userTips, 
+        raceResults, 
+        tipsterNickname, 
+        compName, 
+        leaderboard, 
+        tipsterId,
+        userRole
+    } = useLoaderData<typeof loader>();
     
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-AU', {
@@ -465,11 +475,9 @@ export default function RacedayDetail() {
     };
 
     // Helper to determine if a race has results
-    // --- MODIFIED: Check the 'results' array length ---
     const hasResults = (race: RaceResultDetail) => {
         return race.results && race.results.length > 0;
     };
-    // --- END MODIFICATION ---
 
     // Find the index of the first race with no result.
     const nextToJumpIndex = raceResults.findIndex(race => !hasResults(race));
@@ -482,12 +490,30 @@ export default function RacedayDetail() {
             {/* --- RACEDAY HEADER (FINAL FIXED LAYOUT) --- */}
             <div className="mb-8 p-4 border-b border-gray-200">
                 
-                <p className="text-3xl font-heading font-extrabold text-main mb-3 pb-1 pl-1 leading-none">
-                    {racedayHeader.raceday_name} 
-                </p>
+                {/* 💡 MODIFIED: Added flex wrapper for admin button */}
+                <div className="flex justify-between items-center">
+                    {/* 1. Raceday Name */}
+                    <p className="text-3xl font-heading font-extrabold text-main mb-3 pb-1 pl-1 leading-none">
+                        {racedayHeader.raceday_name} 
+                    </p>
 
-                
+                    {/* 2. 💡 NEW: Admin "Enter Results" Button */}
+                    {userRole === 'superadmin' && (
+                        <Link 
+                            to={`/admin/results/${racedayHeader.raceday_id}`}
+                            title="Enter Race Results"
+                            className="p-2 rounded-full hover:bg-gray-100 text-main"
+                        >
+                            <span className="material-symbols-outlined text-3xl">
+                                captive_portal
+                            </span>
+                        </Link>
+                    )}
+                </div>
+                {/* --- END MODIFICATION --- */}
 
+
+                {/* 2. LocRef Square and Track Details/Comp Link */}
                 <div className="flex items-center pl-1 space-x-3"> 
                     
                     <div className="flex-shrink-0 flex items-center justify-center min-w-[3rem] 

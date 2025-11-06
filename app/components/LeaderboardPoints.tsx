@@ -129,16 +129,16 @@ const LeaderboardPoints: React.FC<LeaderboardPointsProps> = ({ leaderboardData, 
                                         <div className="flex items-center space-x-3">
                                             
                                             {/* Gray Circle Placeholder */}
-                                            <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0">
+                                            <div className="w-12 h-12 rounded-full bg-mainlight flex-shrink-0">
                                                 {/* Future: <img src={row.tipster_mainpic} ... /> */}
                                             </div>
 
                                             {/* min-w-0 ensures the flex item can shrink, allowing truncate to work */}
                                             <div className="min-w-0"> 
-                                                <div className="text-base font-medium text-gray-800">
+                                                <div className="text-base font-medium text-blackmain whitespace-normal break-words">
                                                     {row.tipster_nickname}
                                                 </div>
-                                                <div className="text-sm text-gray-500 truncate">
+                                                <div className="text-sm text-greymain ">
                                                     {row.tipster_slogan}
                                                 </div>
                                             </div>

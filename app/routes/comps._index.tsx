@@ -151,7 +151,7 @@ export default function Comps() {
           <div className="p-6 bg-white">
 
               {visibleComps.length === 0 ? (
-                  <p className="text-gray-500 italic font-body">
+                  <p className="text-greymain italic font-body">
                       You are not currently part of any tipping competitions.
                   </p>
               ) : (
@@ -169,10 +169,10 @@ export default function Comps() {
                               >
                                   <div className="flex items-start justify-between">
                                       <div className="flex-grow min-w-0 pr-4">
-                                          <p className="text-xl font-heading font-bold text-main truncate"> 
+                                          <p className="text-xl font-heading font-bold text-main whitespace-normal break-words"> 
                                               {comp.comp_name}
                                           </p>
-                                          <p className="text-sm font-body text-gray-500 italic truncate mt-0.5"> 
+                                          <p className="text-sm font-body text-gray-500 italic whitespace-normal break-words mt-0.5"> 
                                               {comp.comp_slogan || "A challenging competition awaits!"}
                                           </p>
                                       </div>

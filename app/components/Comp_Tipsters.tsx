@@ -41,13 +41,13 @@ export default function CompTipsters({ tipsters }: CompTipstersProps) {
                 {tipsters.map((tipster, index) => (
                 <li 
                     key={index} 
-                    className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 hover:shadow-xl transition-shadow"
+                    className="p-4 bg-white shadow-lg rounded-lg border border-greymain hover:shadow-xl transition-shadow"
                 >
                     {/* 💡 CHANGE 1: Reverted alignment to sm:items-start (top-aligned) */}
                     <div className="flex flex-col items-center sm:flex-row sm:items-start sm:space-x-4">
                         
                         {/* 💡 NEW CHANGE: Image Placeholder size updated to h-[7.5rem] w-[7.5rem] (h-30 w-30 equivalent) */}
-                        <div className="h-[7.5rem] w-[7.5rem] bg-gray-200 rounded-full flex-shrink-0 mb-3"> 
+                        <div className="h-[7.5rem] w-[7.5rem] bg-mainlight rounded-full flex-shrink-0 mb-3"> 
                             {/* Placeholder for future image */}
                         </div>
 
@@ -58,8 +58,8 @@ export default function CompTipsters({ tipsters }: CompTipstersProps) {
                                 {tipster.tipster_nickname}
                             </p>
                             {tipster.tipster_slogan && (
-                                <p className="text-sm font-body text-gray-500 italic mt-1">
-                                    "{tipster.tipster_slogan}"
+                                <p className="text-sm font-body text-greymain italic mt-1">
+                                    {tipster.tipster_slogan}
                                 </p>
                             )}
                         </div>
