@@ -7,7 +7,8 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "@remix-run/node";
-import { Form, useActionData, useNavigation } from "@remix-run/react";
+// 💡 MODIFICATION: Added Link
+import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
 export const meta: MetaFunction = () => {
@@ -28,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json(null, { headers });
 };
 
-// Action: Handle the form submission
+// Action: Handle the form submission (Unchanged)
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const formData = await request.formData();
@@ -37,7 +38,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const fullname = String(formData.get("fullname"));
   const nickname = String(formData.get("nickname"));
   
-  // NOTE: AUTH_REDIRECT_URL must be set in your .env file
   const emailRedirectTo = process.env.AUTH_REDIRECT_URL;
 
 
@@ -48,20 +48,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // --- CHANGED: Use signInWithOtp for passwordless registration (Magic Link) ---
   const { error } = await supabaseClient.auth.signInWithOtp({
     email,
     options: {
       emailRedirectTo: emailRedirectTo,
-      // The 'data' object is still passed to raw_user_meta_data
-      // This is crucial for the database trigger to populate tipster/user_profiles
       data: {
         fullname: fullname,
         nickname: nickname,
       },
     },
   });
-  // ---------------------------------------------------------------------------
 
   if (error) {
     return json(
@@ -70,20 +66,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // Redirect to a page telling the user to check their email
   return redirect("/check-email", { headers });
 };
 
-// Component: The registration form
+// --- 💡 COMPONENT (Updated) ---
 export default function Register() {
   const actionData = useActionData<typeof action>();
   const { state } = useNavigation();
   const isSubmitting = state === "submitting";
 
   return (
-    <div className="bg-slate-100 h-screen flex justify-center items-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center text-slate-800">
+    // 💡 MODIFIED: Background and padding
+    <div className="bg-white h-screen flex justify-center items-start pt-40">
+      {/* 💡 MODIFIED: Card styling */}
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        {/* 💡 MODIFIED: Font and color */}
+        <h1 className="text-3xl font-heading font-bold text-main mb-6 text-center">
           Create Account
         </h1>
 
@@ -91,7 +89,7 @@ export default function Register() {
           <div className="mb-4">
             <label
               htmlFor="fullname"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-body font-medium text-blackmain"
             >
               Full Name
             </label>
@@ -100,14 +98,15 @@ export default function Register() {
               name="fullname"
               id="fullname"
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              // 💡 MODIFIED: Focus colors
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-main focus:border-main"
             />
           </div>
 
           <div className="mb-4">
             <label
               htmlFor="nickname"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-body font-medium text-blackmain"
             >
               Nickname (display name)
             </label>
@@ -116,14 +115,15 @@ export default function Register() {
               name="nickname"
               id="nickname"
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              // 💡 MODIFIED: Focus colors
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-main focus:border-main"
             />
           </div>
 
           <div className="mb-6">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-body font-medium text-blackmain"
             >
               Email Address
             </label>
@@ -133,28 +133,41 @@ export default function Register() {
               id="email"
               required
               autoComplete="email"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              // 💡 MODIFIED: Focus colors
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-main focus:border-main"
             />
           </div>
-
-          {/* --- REMOVED PASSWORD FIELD --- */}
-          {/* <div className="mb-6">...</div> */}
-          {/* ----------------------------- */}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            // 💡 MODIFIED: Button styling
+            className="w-full bg-main hover:bg-alt text-white font-semibold py-3 px-5 rounded-md transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? "Sending Link..." : "Register & Get Magic Link"}
+            {isSubmitting ? "Sending..." : "Register & Get Magic Link"}
           </button>
 
           {actionData?.error && (
-            <p className="mt-4 text-sm text-red-600 text-center">
+            // 💡 MODIFIED: Text color
+            <p className="mt-4 text-sm text-alert text-center">
               {actionData.error}
             </p>
           )}
         </Form>
+        
+        {/* 💡 NEW: Added Sign In link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm font-body text-blackmain">
+            Already have an account?{" "}
+            <Link
+              to="/auth"
+              className="font-medium text-main hover:text-opacity-80"
+            >
+              Sign In
+            </Link>
+          </p>
+        </div>
+
       </div>
     </div>
   );
