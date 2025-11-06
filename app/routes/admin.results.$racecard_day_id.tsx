@@ -17,7 +17,7 @@ import {
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 import { TipsterHeader } from "~/components/TipsterHeader";
 
-// --- Types ---
+// --- Types (Unchanged) ---
 type RaceRunner = {
   runner_no: number;
   runner_name: string;
@@ -239,7 +239,7 @@ const formatDate = (dateString: string) => {
     });
 };
 
-// --- 💡 Component (Main) (Updated) ---
+// --- Component (Main) (Updated) ---
 export default function AdminResultsEntry() {
   const { 
     raceday_id,
@@ -335,7 +335,7 @@ function RaceForm({ race }: { race: RaceData }) {
   }
   
   return (
-    <fetcher.Form method="post" className="border rounded-lg overflow-hidden mb-8">
+    <fetcher.Form method="post" className="border rounded-lg overflow-hidden mb-8 ">
       <input type="hidden" name="_action" value="save_results" />
       <input type="hidden" name="race_id" value={race.race_id} />
       <input type="hidden" name="race_no" value={race.race_no} />
@@ -347,28 +347,14 @@ function RaceForm({ race }: { race: RaceData }) {
           Race {race.race_no}
         </h3>
         
-        {/* Right Side: Status and Save Button */}
+        {/* Right Side: Status */}
         <div className="flex items-center space-x-3">
           {fetcher.data?.success && !isSaving && (
-            <p className="text-sm text-green-600">Saved & Recalculated!</p>
+            <p className="text-sm text-green-600">Results Saved. Full Leaderboard Recalcuated.</p>
           )}
-          {/* --- 💡 TYPO FIX: fetchall -> fetcher --- */}
           {fetcher.data?.error && !isSaving && (
              <p className="text-sm text-red-600">{fetcher.data.error}</p>
           )}
-
-          {/* Save Icon Button */}
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="text-main hover:text-blue-700 disabled:opacity-50"
-            title="Save Race Results"
-          >
-            <span className="material-symbols-outlined text-3xl">
-              {/* Show loading spinner if this form is saving */}
-              {isSaving ? 'progress_activity' : 'save'}
-            </span>
-          </button>
         </div>
       </div>
       {/* --- END MODIFICATION --- */}
@@ -441,7 +427,17 @@ function RaceForm({ race }: { race: RaceData }) {
       </div>
       {/* --- END Results Grid --- */}
 
-      {/* --- 💡 MODIFICATION: Removed Form Footer --- */}
+      {/* --- 💡 MODIFICATION: Added Form Footer Back --- */}
+      <div className="p-3 bg-gray-50 border-t flex justify-end">
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="bg-main font-semibold text-white py-2 px-5 rounded-md hover:bg-alt disabled:opacity-50"
+        >
+          {isSaving ? "Saving..." : "Save & Update"}
+        </button>
+      </div>
+      {/* --- END MODIFICATION --- */}
     </fetcher.Form>
   );
 }

@@ -2,7 +2,7 @@
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, Outlet } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
 import { MyTipsSection } from "~/components/MyTipsSection";
@@ -25,81 +25,27 @@ export type RacedayHeaderData = {
     comp_id: number;
 };
 
-// For "Next to Jump" races (not finished)
-export type RaceRunnerList = {
-    runner_no: number;
-    runner_name: string;
-    runner_barrier: number | null;
-    runner_jockey: string | null;
-    runner_weight: string | null;
-    runner_form: string | null; 
-    tipster_count?: number;
-}[];
-
-// For "Next to Jump" races (not finished)
-export type SubTipCombo = {
-    main_runner_no: number;
-    main_runner_name: string;
-    alt_runner_no: number;
-    alt_runner_name: string;
-};
-
-// NEW: For "Finished" races
-export type PlacedRunner = {
-    id: number;
-    runner_no: number;
-    position: number;
-    wodds: number | null;
-    podds: number | null;
-    runner_name: string; // Joined from racecard_runner
-};
-
-// REFACTORED: This is the new, combined shape for a race
-export type RaceResultDetail = {
-    race_id: number;
-    race_no: number;
-    race_notes: string;
-    
-    // One of these two will be populated
-    results: PlacedRunner[];       // For finished races
-    allRunners?: RaceRunnerList;   // For "Next to Jump"
-    uniqueSubTips?: SubTipCombo[]; // For "Next to Jump"
-};
-
-export type RunnerDetail = {
-    runner_no: number; 
-    runner_name: string;
-    runner_jockey: string;
-} | null;
-
-export type TipDetail = {
-    race_no: number;
-    tip_main: number;
-    tip_alt: number | null;
-    tip_main_details: RunnerDetail;
-    tip_alt_details: RunnerDetail;
-};
-
-export type TipsterLeaderboardEntry = {
-    tipster_id: number;
-    tipster_nickname: string;
-    tipster_fullname: string;
-    tipster_slogan: string | null;
-    tipster_mainpic: string | null;
-    points_total: number;
-    odds_total_return: number;
-};
+// ... (other types: RaceRunnerList, SubTipCombo, PlacedRunner, RaceResultDetail, RunnerDetail, TipDetail, TipsterLeaderboardEntry) ...
+export type RaceRunnerList = { runner_no: number; runner_name: string; runner_barrier: number | null; runner_jockey: string | null; runner_weight: string | null; runner_form: string | null; tipster_count?: number; }[];
+export type SubTipCombo = { main_runner_no: number; main_runner_name: string; alt_runner_no: number; alt_runner_name: string; };
+export type PlacedRunner = { id: number; runner_no: number; position: number; wodds: number | null; podds: number | null; runner_name: string; };
+export type RaceResultDetail = { race_id: number; race_no: number; race_notes: string; results: PlacedRunner[]; allRunners?: RaceRunnerList; uniqueSubTips?: SubTipCombo[]; };
+export type RunnerDetail = { runner_no: number; runner_name: string; runner_jockey: string; } | null;
+export type TipDetail = { race_no: number; tip_main: number; tip_alt: number | null; tip_main_details: RunnerDetail; tip_alt_details: RunnerDetail; };
+export type TipsterLeaderboardEntry = { tipster_id: number; tipster_nickname: string; tipster_fullname: string; tipster_slogan: string | null; tipster_mainpic: string | null; points_total: number; odds_total_return: number; };
 
 // REFACTORED: Combined loader data shape
 export type RacedayTipsData = {
     racedayHeader: RacedayHeaderData;
     userTips: TipDetail[];
-    raceResults: RaceResultDetail[]; // This uses the new type
+    raceResults: RaceResultDetail[]; 
     tipsterNickname: string | null; 
     compName: string;
     leaderboard: TipsterLeaderboardEntry[]; 
     tipsterId: number;
-    userRole: string; // <-- 💡 ADDED userRole
+    userRole: string; 
+    comp_raceday_id: number; 
+    cutoffTime: string | null; // <-- 💡 ADDED CUTOFF TIME
 };
 
 // --- LOADER FUNCTION (REFACTORED) ---
@@ -120,7 +66,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     const numericCompRacedayId = Number(compRacedayId);
     const numericCompId = Number(compId);
     
-    // 2. 💡 MODIFIED: Fetch user's tipster ID, NICKNAME, and ROLE
+    // 2. MODIFIED: Fetch user's tipster ID, NICKNAME, and ROLE
     const { data: profile, error: profileError } = await supabaseClient
         .from("user_profiles")
         .select(`
@@ -137,7 +83,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     
     const tipsterId = profile.tipster.id;
     const tipsterNickname = profile.tipster.tipster_nickname;
-    const userRole = profile.user_role; // <-- 💡 ADDED userRole
+    const userRole = profile.user_role;
 
     // Fetch the Competition Name
     const { data: compDetails, error: compError } = await supabaseClient
@@ -152,7 +98,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
     const compName = compDetails.comp_name;
 
-    // 3. Get Raceday Header Data & All Race Details 
+    // 3. 💡 MODIFIED: Get Raceday Header Data & All Race Details + CUTOFF TIME
     const { data: compRacedayData, error: racedayError } = await supabaseClient
         .from("comp_raceday")
         .select(
@@ -163,6 +109,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 id,
                 racecard_name,
                 racecard_date,
+                racecard_cutofftimeUTC,
                 racetrack (
                     track_name,
                     track_locref
@@ -174,12 +121,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 )
             )
             `
-        ) 
+        ) // <-- 💡 SQL COMMENT REMOVED 
         .eq("id", numericCompRacedayId)
         .maybeSingle();
 
     if (racedayError || !compRacedayData || !compRacedayData.racecard_day || compRacedayData.comp !== numericCompId) {
-        console.error("Error fetching raceday header or Comp ID mismatch:", racedayError);
+        console.error("Error fetching raceday header or Comp ID mismatch:", racedayError?.message);
         throw new Response("Raceday not found or access denied", { status: 404, headers });
     }
 
@@ -193,253 +140,58 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         racetrack_locref: day.racetrack?.track_locref ?? 'N/A',
         comp_id: numericCompId,
     };
+    
+    // 💡 ADDED: Get the cutoff time
+    const cutoffTime = day.racecard_cutofftimeUTC;
 
+    // ... (rest of loader steps 4, 5, 6, 7, 8 are unchanged) ...
     // Process all races to extract basic details
     const rawRaces = day.racecard_race || [];
-    const raceData = rawRaces
-        .map(race => ({
-            race_id: race.id,
-            race_no: Number(race.race_no),
-            race_notes: race.race_notes || '',
-        }))
-        .sort((a, b) => a.race_no - b.race_no);
-
-    // Prepare a map of Race No. to Racecard_Race ID 
+    const raceData = rawRaces.map(race => ({ race_id: race.id, race_no: Number(race.race_no), race_notes: race.race_notes || '', })).sort((a, b) => a.race_no - b.race_no);
     const raceIdMap = new Map<number, number>();
-    raceData.forEach(race => {
-        raceIdMap.set(race.race_no, race.race_id);
-    });
-
+    raceData.forEach(race => { raceIdMap.set(race.race_no, race.race_id); });
     // 4. Fetch all tips for the competition on this raceday (for Next To Jump)
-    const { data: allCompTipsRaw, error: allCompTipsError } = await supabaseClient
-        .from("tipster_tips_header")
-        .select(`
-            tipster_tips_detail (
-                race_no,
-                tip_main,
-                tip_alt
-            )
-        `)
-        .eq("comp_raceday", numericCompRacedayId);
-
+    const { data: allCompTipsRaw, error: allCompTipsError } = await supabaseClient.from("tipster_tips_header").select(`tipster_tips_detail (race_no,tip_main,tip_alt)`).eq("comp_raceday", numericCompRacedayId);
     const tipCountMap = new Map<number, Map<number, number>>();
     const uniqueSubTipsMap = new Map<number, Set<string>>();
-
-    if (allCompTipsRaw && !allCompTipsError) {
-        for (const header of allCompTipsRaw) {
-            if (header.tipster_tips_detail) {
-                for (const tip of header.tipster_tips_detail) {
-                    const raceNo = tip.race_no;
-                    if (!tipCountMap.has(raceNo)) {
-                        tipCountMap.set(raceNo, new Map<number, number>());
-                    }
-                    const raceMap = tipCountMap.get(raceNo)!;
-                    
-                    const runnerToCount = tip.tip_alt || tip.tip_main;
-                    if (runnerToCount) {
-                        raceMap.set(runnerToCount, (raceMap.get(runnerToCount) || 0) + 1);
-                    }
-
-                    if (tip.tip_main && tip.tip_alt) {
-                        if (!uniqueSubTipsMap.has(raceNo)) {
-                            uniqueSubTipsMap.set(raceNo, new Set<string>());
-                        }
-                        const comboKey = `${tip.tip_main},${tip.tip_alt}`;
-                        uniqueSubTipsMap.get(raceNo)!.add(comboKey);
-                    }
-                }
-            }
-        }
-    }
-
-
+    if (allCompTipsRaw && !allCompTipsError) { for (const header of allCompTipsRaw) { if (header.tipster_tips_detail) { for (const tip of header.tipster_tips_detail) { const raceNo = tip.race_no; if (!tipCountMap.has(raceNo)) { tipCountMap.set(raceNo, new Map<number, number>()); } const raceMap = tipCountMap.get(raceNo)!; const runnerToCount = tip.tip_alt || tip.tip_main; if (runnerToCount) { raceMap.set(runnerToCount, (raceMap.get(runnerToCount) || 0) + 1); } if (tip.tip_main && tip.tip_alt) { if (!uniqueSubTipsMap.has(raceNo)) { uniqueSubTipsMap.set(raceNo, new Set<string>()); } const comboKey = `${tip.tip_main},${tip.tip_alt}`; uniqueSubTipsMap.get(raceNo)!.add(comboKey); } } } } }
     // 5. Build Race Results (REFACTORED)
     const raceResults: RaceResultDetail[] = await Promise.all(
         raceData.map(async (race) => {
-            
-            // Check for results in the new table
-            const { data: results, error: resultsError } = await supabaseClient
-                .from("racecard_race_results")
-                .select("id, runner_no, position, wodds, podds")
-                .eq("racecard_race_id", race.race_id)
-                .order("position");
-
+            const { data: results } = await supabaseClient.from("racecard_race_results").select("id, runner_no, position, wodds, podds").eq("racecard_race_id", race.race_id).order("position");
             const hasFinished = results && results.length > 0;
-
-            if (hasFinished) {
-                // Case 1: Race HAS finished. Fetch runner names for the results.
-                const runnerNos = results.map(r => r.runner_no);
-                
-                const { data: runners, error: runnerError } = await supabaseClient
-                    .from("racecard_runner")
-                    .select("runner_no, runner_name")
-                    .eq("racecard_race", race.race_id)
-                    .in("runner_no", runnerNos);
-
-                const runnerMap = new Map<number, string>();
-                if (runners) {
-                    runners.forEach(r => runnerMap.set(Number(r.runner_no), r.runner_name || 'N/A'));
-                }
-
-                const finalResults: PlacedRunner[] = results.map(r => ({
-                    ...r,
-                    wodds: r.wodds ? Number(r.wodds) : null,
-                    podds: r.podds ? Number(r.podds) : null,
-                    runner_name: runnerMap.get(r.runner_no) ?? 'Name N/A'
-                }));
-
-                return { 
-                    ...race, 
-                    results: finalResults,
-                    allRunners: undefined, 
-                    uniqueSubTips: undefined,
-                };
-            }
-            
-            // Case 2: Race has NOT finished. 
+            if (hasFinished) { const runnerNos = results.map(r => r.runner_no); const { data: runners } = await supabaseClient.from("racecard_runner").select("runner_no, runner_name").eq("racecard_race", race.race_id).in("runner_no", runnerNos); const runnerMap = new Map<number, string>(); if (runners) { runners.forEach(r => runnerMap.set(Number(r.runner_no), r.runner_name || 'N/A')); } const finalResults: PlacedRunner[] = results.map(r => ({ ...r, wodds: r.wodds ? Number(r.wodds) : null, podds: r.podds ? Number(r.podds) : null, runner_name: runnerMap.get(r.runner_no) ?? 'Name N/A' })); return { ...race, results: finalResults, allRunners: undefined, uniqueSubTips: undefined, }; }
             let raceRunners: RaceRunnerList | undefined = undefined;
             let uniqueSubTips: SubTipCombo[] | undefined = undefined;
-
-            // --- A. Fetch Runners and Add Tip Count ---
-            const { data: allRunnersData } = await supabaseClient
-                .from("racecard_runner")
-                .select("runner_no, runner_name, runner_barrier, runner_jockey, runner_weight, runner_form") 
-                .eq("racecard_race", race.race_id)
-                .order("runner_no", { ascending: true });
-
-            if (allRunnersData) {
-                const raceTips = tipCountMap.get(race.race_no) || new Map<number, number>();
-                raceRunners = allRunnersData.map(r => ({
-                    runner_no: Number(r.runner_no),
-                    runner_name: r.runner_name || 'Name N/A',
-                    runner_barrier: r.runner_barrier ? Number(r.runner_barrier) : null,
-                    runner_jockey: r.runner_jockey || null,
-                    runner_weight: r.runner_weight ? String(r.runner_weight) : null,
-                    runner_form: r.runner_form || null, 
-                    tipster_count: raceTips.get(Number(r.runner_no)) || 0,
-                }));
-            }
-            
-            // --- B. Resolve Unique Sub Tips ---
+            const { data: allRunnersData } = await supabaseClient.from("racecard_runner").select("runner_no, runner_name, runner_barrier, runner_jockey, runner_weight, runner_form").eq("racecard_race", race.race_id).order("runner_no", { ascending: true });
+            if (allRunnersData) { const raceTips = tipCountMap.get(race.race_no) || new Map<number, number>(); raceRunners = allRunnersData.map(r => ({ runner_no: Number(r.runner_no), runner_name: r.runner_name || 'Name N/A', runner_barrier: r.runner_barrier ? Number(r.runner_barrier) : null, runner_jockey: r.runner_jockey || null, runner_weight: r.runner_weight ? String(r.runner_weight) : null, runner_form: r.runner_form || null, tipster_count: raceTips.get(Number(r.runner_no)) || 0, })); }
             const subComboSet = uniqueSubTipsMap.get(race.race_no);
-            if (subComboSet && subComboSet.size > 0) {
-                const uniqueRunnerNos = new Set<number>();
-                const combosToResolve: { main: number, alt: number }[] = [];
-                for (const comboKey of subComboSet) {
-                    const [mainStr, altStr] = comboKey.split(',');
-                    const main = Number(mainStr);
-                    const alt = Number(altStr);
-                    uniqueRunnerNos.add(main);
-                    uniqueRunnerNos.add(alt);
-                    combosToResolve.push({ main, alt });
-                }
-
-                const { data: subRunnersData } = await supabaseClient
-                    .from("racecard_runner")
-                    .select("runner_no, runner_name")
-                    .eq("racecard_race", race.race_id)
-                    .in("runner_no", Array.from(uniqueRunnerNos));
-
-                if (subRunnersData) {
-                    const runnerNameMap = new Map<number, string>();
-                    subRunnersData.forEach(r => runnerNameMap.set(Number(r.runner_no), r.runner_name || 'N/A'));
-                    
-                    uniqueSubTips = combosToResolve.map(combo => ({
-                        main_runner_no: combo.main,
-                        main_runner_name: runnerNameMap.get(combo.main) || `Runner ${combo.main} N/A`,
-                        alt_runner_no: combo.alt,
-                        alt_runner_name: runnerNameMap.get(combo.alt) || `Runner ${combo.alt} N/A`,
-                    }));
-                }
-            }
-            
-            return { 
-                ...race, 
-                results: [], 
-                allRunners: raceRunners,
-                uniqueSubTips: uniqueSubTips,
-            };
+            if (subComboSet && subComboSet.size > 0) { const uniqueRunnerNos = new Set<number>(); const combosToResolve: { main: number, alt: number }[] = []; for (const comboKey of subComboSet) { const [mainStr, altStr] = comboKey.split(','); const main = Number(mainStr); const alt = Number(altStr); uniqueRunnerNos.add(main); uniqueRunnerNos.add(alt); combosToResolve.push({ main, alt }); } const { data: subRunnersData } = await supabaseClient.from("racecard_runner").select("runner_no, runner_name").eq("racecard_race", race.race_id).in("runner_no", Array.from(uniqueRunnerNos)); if (subRunnersData) { const runnerNameMap = new Map<number, string>(); subRunnersData.forEach(r => runnerNameMap.set(Number(r.runner_no), r.runner_name || 'N/A')); uniqueSubTips = combosToResolve.map(combo => ({ main_runner_no: combo.main, main_runner_name: runnerNameMap.get(combo.main) || `Runner ${combo.main} N/A`, alt_runner_no: combo.alt, alt_runner_name: runnerNameMap.get(combo.alt) || `Runner ${combo.alt} N/A`, })); } }
+            return { ...race, results: [], allRunners: raceRunners, uniqueSubTips: uniqueSubTips, };
         })
     );
-    // --- END REFACTORED STEP 5 ---
-
-
     // 6. Fetch current user's tips 
-    const { data: userTipsRaw } = await supabaseClient
-        .from("tipster_tips_header")
-        .select(`
-            tipster_tips_detail (
-                race_no,
-                tip_main,
-                tip_alt
-            )
-        `)
-        .eq("tipster", tipsterId)
-        .eq("comp_raceday", numericCompRacedayId)
-        .maybeSingle();
-        
+    const { data: userTipsRaw } = await supabaseClient.from("tipster_tips_header").select(`tipster_tips_detail (race_no,tip_main,tip_alt)`).eq("tipster", tipsterId).eq("comp_raceday", numericCompRacedayId).maybeSingle();
     let userTipsRawData: Omit<TipDetail, 'tip_main_details' | 'tip_alt_details'>[] = [];
-
-    // --- 💡 MODIFICATION: Fixed typo 'tipter_tips_detail' -> 'tipster_tips_detail' ---
-    if (userTipsRaw && userTipsRaw.tipster_tips_detail) {
-        userTipsRawData = userTipsRaw.tipster_tips_detail.map(tip => ({
-            race_no: tip.race_no,
-            tip_main: tip.tip_main,
-            tip_alt: tip.tip_alt,
-        }));
-    }
-    // --- END MODIFICATION ---
-
+    if (userTipsRaw && userTipsRaw.tipster_tips_detail) { userTipsRawData = userTipsRaw.tipster_tips_detail.map(tip => ({ race_no: tip.race_no, tip_main: tip.tip_main, tip_alt: tip.tip_alt, })); }
     userTipsRawData.sort((a, b) => a.race_no - b.race_no);
-
-    // 7. Fetch Runner Details for all tips (Unchanged)
+    // 7. Fetch Runner Details for all tips
     const tipsWithDetails: TipDetail[] = await Promise.all(userTipsRawData.map(async (tip) => {
         const racecardRaceId = raceIdMap.get(Number(tip.race_no));
-        if (!racecardRaceId) {
-            return { ...tip, tip_main_details: null, tip_alt_details: null } as TipDetail;
-        }
+        if (!racecardRaceId) { return { ...tip, tip_main_details: null, tip_alt_details: null } as TipDetail; }
         const runnerNos = [tip.tip_main, ...(tip.tip_alt ? [tip.tip_alt] : [])];
-        const { data: runners } = await supabaseClient
-            .from("racecard_runner")
-            .select("runner_no, runner_name, runner_jockey")
-            .eq("racecard_race", racecardRaceId)
-            .in("runner_no", runnerNos);
-
-        if (!runners) {
-            return { ...tip, tip_main_details: null, tip_alt_details: null } as TipDetail;
-        }
-
+        const { data: runners } = await supabaseClient.from("racecard_runner").select("runner_no, runner_name, runner_jockey").eq("racecard_race", racecardRaceId).in("runner_no", runnerNos);
+        if (!runners) { return { ...tip, tip_main_details: null, tip_alt_details: null } as TipDetail; }
         const runnerMap = new Map<number, RunnerDetail>();
-        runners.forEach(r => {
-            runnerMap.set(Number(r.runner_no), {
-                runner_no: Number(r.runner_no),
-                runner_name: r.runner_name || 'N/A',
-                runner_jockey: r.runner_jockey || 'N/A',
-            });
-        });
-        
-        return {
-            ...tip,
-            tip_main_details: runnerMap.get(Number(tip.tip_main)) || null,
-            tip_alt_details: tip.tip_alt ? runnerMap.get(Number(tip.tip_alt)) || null : null,
-        } as TipDetail;
+        runners.forEach(r => { runnerMap.set(Number(r.runner_no), { runner_no: Number(r.runner_no), runner_name: r.runner_name || 'N/A', runner_jockey: r.runner_jockey || 'N/A', }); });
+        return { ...tip, tip_main_details: runnerMap.get(Number(tip.tip_main)) || null, tip_alt_details: tip.tip_alt ? runnerMap.get(Number(tip.tip_alt)) || null : null, } as TipDetail;
     }));
-    
-    // 8. Fetch Leaderboard Data (Unchanged)
-    const { data: combinedLeaderboardData, error: combinedLeaderboardError } = await supabaseClient
-        .rpc("get_comp_raceday_leaderboard", {
-            comp_raceday_id_in: numericCompRacedayId,
-        })
-        .returns<TipsterLeaderboardEntry[]>();
-
+    // 8. Fetch Leaderboard Data
+    const { data: combinedLeaderboardData, error: combinedLeaderboardError } = await supabaseClient.rpc("get_comp_raceday_leaderboard", { comp_raceday_id_in: numericCompRacedayId, }).returns<TipsterLeaderboardEntry[]>();
     let leaderboard: TipsterLeaderboardEntry[] = [];
-    if (combinedLeaderboardError) {
-        console.error("Error fetching combined leaderboard data:", combinedLeaderboardError);
-    } else {
-        leaderboard = combinedLeaderboardData || [];
-    }
+    if (combinedLeaderboardError) { console.error("Error fetching combined leaderboard data:", combinedLeaderboardError); } else { leaderboard = combinedLeaderboardData || []; }
     
-    // 9. 💡 MODIFIED: Return all data + userRole
+    // 9. 💡 MODIFIED: Return all data
     return json({ 
         racedayHeader, 
         userTips: tipsWithDetails, 
@@ -448,13 +200,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         compName, 
         leaderboard,
         tipsterId,
-        userRole // <-- 💡 ADDED userRole
+        userRole,
+        comp_raceday_id: numericCompRacedayId,
+        cutoffTime // <-- 💡 ADDED
     } as RacedayTipsData, { headers });
 };
 
 // --- REACT COMPONENT: DISPLAYING DATA (REFACTORED) ---
 export default function RacedayDetail() {
-    // 💡 MODIFIED: Destructure userRole
+    // 💡 MODIFIED: Destructure cutoffTime
     const { 
         racedayHeader, 
         userTips, 
@@ -463,8 +217,28 @@ export default function RacedayDetail() {
         compName, 
         leaderboard, 
         tipsterId,
-        userRole
+        userRole,
+        comp_raceday_id,
+        cutoffTime // <-- 💡 ADDED
     } = useLoaderData<typeof loader>();
+
+    // --- 💡 NEW: Check if tips are locked ---
+    let isLocked = false;
+    
+    // FOR TESTING: Use your manual date
+    // This will be '2025-10-25T09:00:00+11:00'
+    const now = new Date('2025-10-25T09:00:00+11:00'); 
+    
+    // FOR PRODUCTION: Use this line instead
+    // const now = new Date(); 
+    
+    if (cutoffTime) {
+      const cutoff = new Date(cutoffTime);
+      if (now > cutoff) {
+        isLocked = true;
+      }
+    }
+    // --- END NEW ---
     
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-AU', {
@@ -487,48 +261,28 @@ export default function RacedayDetail() {
             
             <TipsterHeader nickname={tipsterNickname} />
 
-            {/* --- RACEDAY HEADER (FINAL FIXED LAYOUT) --- */}
-            <div className="mb-8 p-4 border-b border-gray-200">
+            {/* --- RACEDAY HEADER --- */}
+            <div className="mb-0 p-4 border-b border-gray-200">
                 
-                {/* 💡 MODIFIED: Added flex wrapper for admin button */}
                 <div className="flex justify-between items-center">
                     {/* 1. Raceday Name */}
                     <p className="text-3xl font-heading font-extrabold text-main mb-3 pb-1 pl-1 leading-none">
                         {racedayHeader.raceday_name} 
                     </p>
-
-                    {/* 2. 💡 NEW: Admin "Enter Results" Button */}
-                    {userRole === 'superadmin' && (
-                        <Link 
-                            to={`/admin/results/${racedayHeader.raceday_id}`}
-                            title="Enter Race Results"
-                            className="p-2 rounded-full hover:bg-gray-100 text-main"
-                        >
-                            <span className="material-symbols-outlined text-3xl">
-                                captive_portal
-                            </span>
-                        </Link>
-                    )}
                 </div>
-                {/* --- END MODIFICATION --- */}
-
 
                 {/* 2. LocRef Square and Track Details/Comp Link */}
                 <div className="flex items-center pl-1 space-x-3"> 
-                    
                     <div className="flex-shrink-0 flex items-center justify-center min-w-[3rem] 
                                 bg-white border-2 border-main "> 
                         <p className="text-lg font-heading font-extrabold text-main uppercase py-2.5 px-2">
                             {racedayHeader.racetrack_locref}
                         </p>
                     </div>
-
                     <div className="flex flex-col space-y-0.5"> 
-                        
                         <p className="text-md font-body text-blackmain leading-none">
                             {racedayHeader.racetrack_name} - {formatDate(racedayHeader.raceday_date)}
                         </p>
-
                         <Link 
                             to={`/comps/${racedayHeader.comp_id}`} 
                             className="text-md underline font-heading text-main hover:text-alt transition"
@@ -538,39 +292,96 @@ export default function RacedayDetail() {
                     </div>
                 </div>
             </div>
-            
-            {/* NEXT TO JUMP AND MY TIPS (Grouped in 2 columns on large screen) */}
-            <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 h-auto lg:items-start">
 
+            {/* --- ADMIN/USER MENU --- */}
+            <div className="py-2 pr-4 flex items-center justify-end space-x-4">
+                
+                {/* 1. Enter Results (ADMIN ONLY) */}
+                {userRole === 'superadmin' && (
+                    <Link 
+                        to={`/admin/results/${racedayHeader.raceday_id}`}
+                        title="Enter Race Results"
+                        className="p-2 text-main inline-flex items-center space-x-1 hover:bg-gray-100 rounded-md"
+                    >
+                        <span className="text-sm font-medium">Enter Results</span>
+                        <span className="material-symbols-outlined text-xl">
+                            captive_portal
+                        </span>
+                    </Link>
+                )}
+
+                {/* 2. View All Tips (ALL USERS) */}
+                <Link 
+                    to={`/comps/${racedayHeader.comp_id}/${comp_raceday_id}/review#review-section`}
+                    title="View All Tips"
+                    className="p-2 text-main inline-flex items-center space-x-1 hover:bg-gray-100 rounded-md"
+                >
+                    <span className="text-sm font-medium">View All Tips</span>
+                    <span className="material-symbols-outlined text-xl">
+                        border_all
+                    </span>
+                </Link>
+
+                {/* 3. 💡 MODIFIED: Edit Tips (Conditionally enabled) */}
+                {isLocked ? (
+                  // Case 1: Tips are LOCKED
+                  <div 
+                      title="Tips are locked for this raceday."
+                      className="p-2 text-gray-400 inline-flex items-center space-x-1 cursor-not-allowed"
+                  >
+                      <span className="text-sm font-medium">Edit My Tips</span>
+                      <span className="material-symbols-outlined text-xl">
+                          lock
+                      </span>
+                  </div>
+                ) : (
+                  // Case 2: Tips are OPEN
+                  <Link 
+                      to={`/comps/${racedayHeader.comp_id}/${comp_raceday_id}/edit-tips#review-section`}
+                      title="Edit My Tips"
+                      className="p-2 text-main inline-flex items-center space-x-1 hover:bg-gray-100 rounded-md"
+                  >
+                      <span className="text-sm font-medium">Edit My Tips</span>
+                      <span className="material-symbols-outlined text-xl">
+                          edit_square
+                      </span>
+                  </Link>
+                )}
+                {/* --- END MODIFICATION --- */}
+                    
+            </div>
+
+            
+            {/* NEXT TO JUMP AND MY TIPS */}
+            <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 h-auto lg:items-start">
                 <NextToJumpSummary
                     racedayHeader={racedayHeader}
                     raceResults={raceResults}
                     nextToJumpIndex={nextToJumpIndex}
                 />
-
                 <MyTipsSection userTips={userTips} />
-
             </div>
 
-            {/* --- LEADERBOARDS (Grouped in 2 columns on large screen) --- */}
+            {/* --- LEADERBOARDS --- */}
             <div className="grid grid-cols-1 gap-16 lg:gap-4 lg:grid-cols-2 mt-8 lg:items-start">
-
                 <LeaderboardPoints leaderboardData={leaderboard}
                 currentTipsterId={tipsterId}
                  />
-
                 <LeaderboardOdds leaderboardData={leaderboard} 
                 currentTipsterId={tipsterId}
                 />
-
             </div>
 
-
-            {/* RACE CARD LIST AND RESULTS SECTION (Full Width) */}
+            {/* RACE CARD LIST AND RESULTS SECTION */}
             <Racecard 
                 raceResults={raceResults} 
                 nextToJumpIndex={nextToJumpIndex} 
             />
+
+            {/* Outlet for child routes (review, edit-tips) */}
+            <div id="review-section" className="mt-12 pt-8">
+              <Outlet />
+            </div>
 
         </div>
     );

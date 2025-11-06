@@ -25,7 +25,7 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
 
                 {/* Right side: Edit Icon */}
                 <span className="material-symbols-outlined text-3xl">
-                    edit_square
+                    {/*edit_square*/}
                 </span>
             </div>
 
