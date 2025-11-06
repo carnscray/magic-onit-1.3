@@ -1,7 +1,8 @@
 // app/routes/auth.tsx
 
 import { json } from "@remix-run/node";
-import { Form, useActionData, useNavigation } from "@remix-run/react";
+// 💡 MODIFICATION: Added Link
+import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
@@ -9,7 +10,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const formData = await request.formData();
 
-  // Use the environment variable, falling back to the local value if not present
+  // Use the environment variable
   const emailRedirectTo = process.env.AUTH_REDIRECT_URL;
 
   const { error } = await supabaseClient.auth.signInWithOtp({
@@ -29,43 +30,76 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 const SignIn = () => {
   const actionData = useActionData<typeof action>();
   const { state } = useNavigation();
+  const isSubmitting = state === "submitting";
 
   return (
-    <div className="bg-orange-50 h-screen flex justify-center items-center">
-      {!actionData?.success ? (
-        <Form method="post" className="min-w-96 h-auto">
-          <div className="w-full">
-            <h2 className="text-xl font-medium">Sign in</h2>
-            <hr />
-            <div className="mb-5 mt-2">
-              <label
-                htmlFor="email"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Your email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Your email address"
-                required
-              />
-            </div>
+    // 💡 MODIFIED: Background and padding
+    <div className="bg-white h-screen flex justify-center items-start pt-40">
+      
+      {/* 💡 MODIFIED: Card styling */}
+      <section className="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl w-full">
+        {!actionData?.success ? (
+          // --- FORM STATE ---
+          <>
+            <h1 className="text-3xl font-heading font-bold text-main mb-6 text-center">
+              Sign In
+            </h1>
+            <Form method="post">
+              <div className="w-full">
+                <div className="mb-5 mt-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-body font-medium text-blackmain"
+                  >
+                    Your email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    // 💡 MODIFIED: Focus colors
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-main focus:border-main"
+                    placeholder="Your email address"
+                    required
+                  />
+                </div>
 
-            <button
-              type="submit"
-              disabled={state === "submitting"}
-              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-            >
-              {state === "submitting" ? "Signing in..." : "Sign in"}
-            </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  // 💡 MODIFIED: Button styling
+                  className="w-full bg-main hover:bg-alt text-white font-semibold py-3 px-5 rounded-md transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? "Sending Link..." : "Send Magic Link"}
+                </button>
+              </div>
+            </Form>
+            
+            {/* 💡 NEW: Added Register link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm font-body text-blackmain">
+                No account?{" "}
+                <Link
+                  to="/register"
+                  className="font-medium text-main hover:text-opacity-80 underline"
+                >
+                  Register
+                </Link>
+              </p>
+            </div>
+          </>
+        ) : (
+          // --- SUCCESS STATE ---
+          <div className="text-center">
+            <h1 className="text-3xl font-heading font-bold text-main mb-4">
+              Check Your Email
+            </h1>
+            <p className="text-lg text-blackmain font-body">
+              We've sent a magic link to your email address. Click the link to sign in.
+            </p>
           </div>
-        </Form>
-      ) : (
-        <h3 className="text-lg font-medium">Please check your email.</h3>
-      )}
+        )}
+      </section>
     </div>
   );
 };
