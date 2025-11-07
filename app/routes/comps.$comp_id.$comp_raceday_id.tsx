@@ -490,7 +490,7 @@ export default function RacedayDetail() {
                             <div className={loadingClasses}>Loading My Tips...</div>
                         ) : (
                             <button onClick={handleLoadTips} className={buttonInnerClasses}>
-                                Load: My Tips
+                                View My Tips
                             </button>
                         )}
                     </div>
@@ -511,7 +511,7 @@ export default function RacedayDetail() {
                             <div className={loadingClasses}>Loading Next To Jump...</div>
                         ) : (
                             <button onClick={handleLoadNextToJump} className={buttonInnerClasses}>
-                                Load: Next To Jump
+                                View Next To Jump
                             </button>
                         )}
                     </div>
@@ -534,7 +534,7 @@ export default function RacedayDetail() {
                     <div className={loadingClasses}>Loading All Tips...</div>
                 ) : (
                     <button onClick={handleLoadReview} className={buttonInnerClasses}>
-                        Load: All Tips
+                        Leaderboard Detail
                     </button>
                 )}
               </div>
@@ -552,7 +552,7 @@ export default function RacedayDetail() {
                 <div className={loadingClasses}>Loading Full Racecard Details...</div>
               ) : (
                 <button onClick={handleLoadRacecard} className={buttonInnerClasses}>
-                  Load: Racecard
+                  Form Guide & Results
                 </button>
               )}
             </div>
