@@ -70,7 +70,7 @@ export default function CompRacedayCard({ raceday }: CompRacedayCardProps) {
                 to={`${raceday.comp_raceday_id}`}
                 // 💡 ADDED: Styling moved from <li>. Added interaction feedback.
                 className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 transition-all duration-200 block w-full h-full 
-                           hover:shadow-xl hover:bg-mainlight active:bg-second active:scale-[0.9] transform"
+                           hover:shadow-xl hover:bg-mainlight active:bg-second active:scale-[0.9] focus:bg-second transform"
             >
                 
                 {/* LAYOUT: LocRef + Details Container */}

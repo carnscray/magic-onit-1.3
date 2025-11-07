@@ -388,7 +388,7 @@ export default function RacedayDetail() {
 
 
   const buttonContainerClasses = "flex justify-center w-full"; // Ensures button is always centered
-  const buttonInnerClasses = "bg-alt text-white font-semibold py-2 px-6 rounded-full transition-colors w-full max-w-lg text-center  active:bg-altlight active:scale-[0.95] transform"; // Fixed width button
+  const buttonInnerClasses = "bg-alt text-white font-semibold py-2 px-6 rounded-full transition-colors w-full max-w-lg text-center  active:bg-altlight active:scale-[0.95]  transform"; // Fixed width button
   const loadingClasses = "p-4 bg-gray-50 rounded-lg text-main font-semibold w-60 mx-auto text-center"; 
 
 

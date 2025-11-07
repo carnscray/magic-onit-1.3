@@ -164,7 +164,7 @@ export default function Comps() {
                               <Link 
                                   to={`/comps/${comp.id}`} 
                                   className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 transition-all duration-200 block w-full h-full 
-                                             hover:shadow-xl hover:bg-mainlight active:bg-second active:scale-[0.9] transform"
+                                             hover:shadow-xl hover:bg-mainlight active:bg-second active:scale-[0.9] focus:bg-second transform"
                               >
                                   <div className="flex items-start justify-between">
                                       <div className="flex-grow min-w-0 pr-4">

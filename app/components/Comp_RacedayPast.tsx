@@ -79,7 +79,7 @@ export default function CompRacedayPast({ racedays = [] }: CompRacedayPastProps)
                                     // 🛑 MODIFIED: Link wraps the content and holds the visual styling + interaction
                                     className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 block w-full h-full 
                                                transition-all duration-200 hover:shadow-xl hover:bg-mainlight 
-                                               active:bg-second active:scale-[0.9] transform"
+                                               active:bg-second active:scale-[0.9] focus:bg-second transform"
                                 >
                                     
                                     {/* NEW CARD LAYOUT */}
