@@ -455,7 +455,7 @@ export default function RacedayDetail() {
             className="p-2 text-alt inline-flex items-center space-x-1 hover:bg-mainlight rounded-md"
           >
             <span className="material-symbols-outlined text-xl">edit_square</span>
-            <span className="text-sm font-medium">Edit My Tips</span>
+            <span className="text-sm font-medium">Enter My Tips</span>
           </Link>
         )}
       </div>
