@@ -241,14 +241,14 @@ export default function Comps() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
+                  className="px-4 py-2 rounded-md text-blackmain bg-mainlight active:scale-[0.95] transform"
                   disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 rounded-md text-white bg-alt  disabled:opacity-50 active:bg-altlight active:scale-[0.95] transform"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Joining..." : "Join"}

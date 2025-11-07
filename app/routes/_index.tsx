@@ -72,7 +72,7 @@ export default function Index() {
             </p>
             <div className="flex flex-col space-y-4">
               <Link
-                className="w-full text-center bg-main hover:bg-alt text-white font-semibold py-3 px-5 rounded-md transition-colors"
+                className="w-full text-center bg-alt  text-white font-semibold py-3 px-5 rounded-md transition-colors active:bg-altlight active:scale-[0.95] transform"
                 to="/auth"
               >
                 Sign In

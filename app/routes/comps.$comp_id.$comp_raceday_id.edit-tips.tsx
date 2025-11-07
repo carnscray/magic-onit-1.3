@@ -300,7 +300,7 @@ export default function EditTips() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="bg-alt text-white font-semibold py-2 px-5 rounded-md  active:bg-altlight active:scale-[0.9] transform"
+                className="bg-alt text-white font-semibold py-2 px-5 rounded-md  active:bg-altlight active:scale-[0.95] transform"
 
               >
                 {isSaving ? "Saving..." : "Save All"}

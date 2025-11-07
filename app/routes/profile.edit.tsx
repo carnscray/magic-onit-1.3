@@ -198,7 +198,7 @@ export default function EditProfile() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto bg-alt text-white py-2 px-6 rounded-md active:bg-altlight active:scale-[0.9] transform"
+                  className="w-full sm:w-auto bg-alt text-white py-2 px-6 rounded-md active:bg-altlight active:scale-[0.95] transform"
                 >
                   {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>

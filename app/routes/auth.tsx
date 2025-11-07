@@ -71,7 +71,7 @@ const SignIn = () => {
                   type="submit"
                   disabled={isSubmitting}
                   // 💡 MODIFIED: Button styling
-                  className="w-full bg-main hover:bg-alt text-white font-semibold py-3 px-5 rounded-md transition-colors disabled:opacity-50"
+                  className="w-full bg-alt  text-white font-semibold py-3 px-5 rounded-md transition-colors disabled:opacity-50 active:bg-altlight active:scale-[0.95] transform"
                 >
                   {isSubmitting ? "Sending Link..." : "Send Magic Link"}
                 </button>

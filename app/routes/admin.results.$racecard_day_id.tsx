@@ -435,7 +435,7 @@ function RaceForm({ race }: { race: RaceData }) {
         <button
           type="submit"
           disabled={isSaving}
-          className="bg-alt font-semibold text-white py-2 px-5 rounded-md active:bg-altlight active:scale-[0.9] transform"
+          className="bg-alt font-semibold text-white py-2 px-5 rounded-md active:bg-altlight active:scale-[0.95] transform"
         >
           {isSaving ? "Saving..." : "Save & Update"}
         </button>
