@@ -1,4 +1,4 @@
-// Comp_RacedayPast.tsx (Final Past Filter with Conditional Card Layout)
+// Comp_RacedayPast.tsx
 
 import { Link } from "@remix-run/react"; 
 import type { RacedayData } from "../routes/comps.$comp_id._layout"; // Adjusted import path assumption
@@ -27,25 +27,38 @@ const parseLocalDay = (dateString: string) => {
 export default function CompRacedayPast({ racedays = [] }: CompRacedayPastProps) {
     
     // ==========================================================
-    // PAST FILTERING & SORTING LOGIC (UNCHANGED)
+    // 💡 PAST FILTERING & SORTING LOGIC (UPDATED)
     // ==========================================================
     
-    const MANUAL_TODAY_STRING = '2025-10-25'; 
-    const todayStart = parseLocalDay(MANUAL_TODAY_STRING);
+    // 1. Get today's date
+    const today = new Date();
+    
+    // 2. Format it as 'YYYY-MM-DD' to match the parseLocalDay function
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // getMonth() is 0-indexed
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`; 
 
+    // 3. Use your existing function to get the start of today
+    const todayStart = parseLocalDay(todayString);
+
+    // 4. Define the boundary: Yesterday
     const yesterdayStart = new Date(todayStart);
     yesterdayStart.setDate(todayStart.getDate() - 1); 
 
+    // 5. Filter for past racedays (comparing dates from the same function)
     let pastRacedays = racedays.filter(raceday => {
         const racedayDate = parseLocalDay(raceday.raceday_date);
         return racedayDate.getTime() < yesterdayStart.getTime();
     });
 
+    // 6. Sort (unchanged)
     pastRacedays.sort((a, b) => {
         const dateA = parseLocalDay(a.raceday_date).getTime();
         const dateB = parseLocalDay(b.raceday_date).getTime();
         return dateB - dateA; 
     });
+    // ==========================================================
 
 
     return (

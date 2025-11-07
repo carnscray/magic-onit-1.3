@@ -92,7 +92,7 @@ export default function Comps() {
   const visibleComps = competitions.filter(
     (comp: any) => {
       const privacy = (comp.comp_privacy || '').trim().toLowerCase();
-      return privacy !== "global_private";
+      return privacy !== "global_private" && privacy !== "hidden";
     }
   );
 

@@ -125,10 +125,10 @@ export function Racecard({ raceResults, nextToJumpIndex }: RacecardProps) {
                     // 💡 MODIFIED: Using new hasResults function
                     if (hasResults(race)) { 
                         statusText = 'RESULT';
-                        statusClasses = 'bg-green-100 text-green-800';
+                        statusClasses = 'bg-second text-main';
                     } else if (index === nextToJumpIndex && index !== -1) {
                         statusText = 'NEXT TO JUMP';
-                        statusClasses = 'bg-pink-100 text-pink-800';
+                        statusClasses = 'bg-alert text-white';
                     }
 
                     // --- RUNNER DATA PROCESSING (UNCHANGED) ---

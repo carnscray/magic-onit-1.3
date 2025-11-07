@@ -54,19 +54,19 @@
 
 /* Selected colours */
 :root {
-  --color-main: #336E5B;
-  --color-second: #DBFCE7;  /*bright red #ae1111*/
+  --color-main: #234d3f;
+  --color-second: #dbfcfa;  /*bright red #ae1111*/
   
   --color-alert: #c34242;
   --color-alertlight: #fe8282;
 
-  --color-alt: #1c1962;
-  --color-altlight: #4843d6;
+  --color-alt: #023323;
+  --color-altlight: #30ab78;
 
   --color-grey-main: #6e7174;
 
   --color-main-dark: #336E5B;
-  --color-main-medium: #23875D;
+  --color-main-medium: #30ab78;
   --color-main-light: #F3F5F7;
   --color-main-lighter: #ae1111;
   --color-main-lightest: #ae1111;

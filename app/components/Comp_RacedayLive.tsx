@@ -24,7 +24,7 @@ export default function CompRacedayLive({ racedays }: CompRacedayLiveProps) {
     // 1. MANUALLY SET REFERENCE DATE FOR TESTING (e.g., Nov 5, 2025)
     // NOTE: For production, you would replace this with `new Date()`
     const MANUAL_TODAY = new Date('2025-10-25'); 
-    const todayStart = startOfDay(MANUAL_TODAY);
+    const todayStart = startOfDay(new Date());
 
     // 2. Define the date window boundaries: Yesterday to Today + 3 Days
     

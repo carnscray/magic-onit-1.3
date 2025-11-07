@@ -65,9 +65,7 @@ export function TipsterAllTips({
       {/* 💡 MODIFIED: Changed perimeter div to match MyTipsSection content container */}
       <div className="bg-white p-6 shadow-lg rounded-b-2xl border border-gray-100 border-t-0 space-y-12 mb-12">
         
-        {/* REMOVED: Redundant H1 "Tipster Review Detail" */}
-
-        {/* --- TABLE 1: TIPS (Internal content unchanged) --- */}
+        {/* --- TABLE 1: TIPS (Unchanged) --- */}
         <section>
           <h2 className="text-2xl font-bold text-main mb-4">Tipster Selections</h2>
           <div className="overflow-x-auto relative border border-gray-300 rounded-lg">
@@ -110,7 +108,7 @@ export function TipsterAllTips({
           </div>
         </section>
 
-        {/* --- TABLE 2: POINTS (Internal content unchanged) --- */}
+        {/* --- TABLE 2: POINTS (MODIFIED) --- */}
         <section>
           <h2 className="text-2xl font-bold text-main mb-4">Points Earned</h2>
           <div className="overflow-x-auto relative border border-gray-300 rounded-lg">
@@ -118,10 +116,11 @@ export function TipsterAllTips({
               <thead>
                 <tr>
                   <th className={`${headerCellClasses} left-0`}>Tipster</th>
+                  {/* 💡 MOVED Total column */}
+                  <th className={headerCellClasses}>Total</th> 
                   {raceNumbers.map((num) => (
                     <th key={num} className={headerCellClasses}>{`R${num}`}</th>
                   ))}
-                  <th className={headerCellClasses}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -129,6 +128,10 @@ export function TipsterAllTips({
                   <tr key={tipster.tipster_id} className="hover:bg-gray-50">
                     <td className={tipsterCellClasses}>
                       {tipster.tipster_nickname}
+                    </td>
+                    {/* 💡 MOVED Total cell */}
+                    <td className={totalCellClasses}>
+                      {!tipster.hasTipped ? <span className="text-greymain">-</span> : tipster.totalPoints}
                     </td>
                     {raceNumbers.map((num) => {
                       const points = tipster.points[num] || 0;
@@ -140,9 +143,6 @@ export function TipsterAllTips({
                         </td>
                       );
                     })}
-                    <td className={totalCellClasses}>
-                      {!tipster.hasTipped ? <span className="text-greymain">-</span> : tipster.totalPoints}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -150,7 +150,7 @@ export function TipsterAllTips({
           </div>
         </section>
 
-        {/* --- TABLE 3: ODDS (Internal content unchanged) --- */}
+        {/* --- TABLE 3: ODDS (MODIFIED) --- */}
         <section>
           <h2 className="text-2xl font-bold text-main mb-4">Odds Earned</h2>
           <div className="overflow-x-auto relative border border-gray-300 rounded-lg">
@@ -158,10 +158,11 @@ export function TipsterAllTips({
               <thead>
                 <tr>
                   <th className={`${headerCellClasses} left-0`}>Tipster</th>
+                  {/* 💡 MOVED Total column */}
+                  <th className={headerCellClasses}>Total</th>
                   {raceNumbers.map((num) => (
                     <th key={num} className={headerCellClasses}>{`R${num}`}</th>
                   ))}
-                  <th className={headerCellClasses}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,6 +170,10 @@ export function TipsterAllTips({
                   <tr key={tipster.tipster_id} className="hover:bg-gray-50">
                     <td className={tipsterCellClasses}>
                       {tipster.tipster_nickname}
+                    </td>
+                    {/* 💡 MOVED Total cell */}
+                    <td className={totalCellClasses}>
+                      {!tipster.hasTipped ? <span className="text-greymain">-</span> : tipster.totalOdds.toFixed(2)}
                     </td>
                     {raceNumbers.map((num) => {
                       const odds = tipster.odds[num] || 0;
@@ -180,9 +185,6 @@ export function TipsterAllTips({
                         </td>
                       );
                     })}
-                    <td className={totalCellClasses}>
-                      {!tipster.hasTipped ? <span className="text-greymain">-</span> : tipster.totalOdds.toFixed(2)}
-                    </td>
                   </tr>
                 ))}
               </tbody>
