@@ -48,9 +48,9 @@ const getRacedayStatus = (racedayDateString: string) => {
     if (dayTime === todayTime) {
         return { text: "TODAY", style: "bg-alert text-white" };
     } else if (dayTime === yesterdayTime) {
-        return { text: "YESTERDAY", style: "bg-orange-500 text-white" };
+        return { text: "YESTERDAY", style: "bg-mainlight text-white" };
     } else {
-        return { text: "UPCOMING", style: "bg-indigo-600 text-white" };
+        return { text: "UPCOMING", style: "bg-alt text-white" };
     }
 };
 

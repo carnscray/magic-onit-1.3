@@ -446,7 +446,7 @@ export default function RacedayDetail() {
             className="p-2 text-gray-400 inline-flex items-center space-x-1 cursor-not-allowed"
           >
             <span className="material-symbols-outlined text-xl">lock</span>
-            <span className="text-sm font-medium">Edit My Tips</span>
+            <span className="text-md font-medium">Enter My Tips</span>
           </div>
         ) : (
           <Link
