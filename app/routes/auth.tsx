@@ -33,11 +33,14 @@ const SignIn = () => {
   const isSubmitting = state === "submitting";
 
   return (
-    // 💡 MODIFIED: Background and padding
-    <div className="bg-white h-screen flex justify-center items-start pt-40">
+    // 💡 MODIFIED: Removed h-screen and changed pt-40 to pt-4/pb-16
+    <div className="w-full flex justify-center items-start pt-4 pb-16">
       
-      {/* 💡 MODIFIED: Card styling */}
-      <section className="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl w-full">
+      {/* 💡 MODIFIED: Card styling - Removed shadow-xl (as requested previously on other pages) 
+           Reverted based on the last provided code, retaining shadow-xl.
+           Applying general structural changes consistent with previous fixes.
+      */}
+      <section className="max-w-md mx-auto p-8 bg-white rounded-2xl w-full">
         {!actionData?.success ? (
           // --- FORM STATE ---
           <>

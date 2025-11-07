@@ -1,7 +1,7 @@
-// Comp_RacedayPast.tsx (Final Past Filter with Custom Card Layout)
+// Comp_RacedayPast.tsx (Final Past Filter with Conditional Card Layout)
 
 import { Link } from "@remix-run/react"; 
-import type { RacedayData } from "./$comp_id"; 
+import type { RacedayData } from "../routes/comps.$comp_id._layout"; // Adjusted import path assumption
 
 // Prop definition
 type CompRacedayPastProps = {
@@ -71,9 +71,16 @@ export default function CompRacedayPast({ racedays = [] }: CompRacedayPastProps)
                         {pastRacedays.map((raceday) => (
                             <li 
                                 key={raceday.comp_raceday_id} 
-                                className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 hover:shadow-xl transition-shadow"
+                                // 🛑 MODIFIED: List item is now just a relative wrapper
+                                className="relative"
                             >
-                                <Link to={`${raceday.comp_raceday_id}`}>
+                                <Link 
+                                    to={`${raceday.comp_raceday_id}`}
+                                    // 🛑 MODIFIED: Link wraps the content and holds the visual styling + interaction
+                                    className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 block w-full h-full 
+                                               transition-all duration-200 hover:shadow-xl hover:bg-mainlight 
+                                               active:bg-second active:scale-[0.9] transform"
+                                >
                                     
                                     {/* NEW CARD LAYOUT */}
                                     <div className="flex items-start space-x-4">

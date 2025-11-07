@@ -76,10 +76,10 @@ export default function Register() {
   const isSubmitting = state === "submitting";
 
   return (
-    // 💡 MODIFIED: Background and padding
-    <div className="bg-white h-screen flex justify-center items-start pt-40">
+    // 💡 MODIFIED: Removed h-screen and changed pt-40 to pt-16/pb-16 for better centering
+    <div className="w-full flex justify-center items-start pt-4 pb-16">
       {/* 💡 MODIFIED: Card styling */}
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+      <div className="bg-white p-8 rounded-2xl  w-full max-w-md">
         {/* 💡 MODIFIED: Font and color */}
         <h1 className="text-3xl font-heading font-bold text-main mb-6 text-center">
           Create Account
@@ -161,7 +161,7 @@ export default function Register() {
             Already have an account?{" "}
             <Link
               to="/auth"
-              className="font-medium text-main hover:text-opacity-80"
+              className="font-medium underline text-main hover:text-opacity-80"
             >
               Sign In
             </Link>

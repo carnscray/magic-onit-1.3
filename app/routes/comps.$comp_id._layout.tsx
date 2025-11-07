@@ -8,9 +8,7 @@ import CompTipsters from "~/components/Comp_Tipsters";
 import CompRacedayLive from "~/components/Comp_RacedayLive"; 
 import CompRacedayPast from "~/components/Comp_RacedayPast"; 
 
-import { TipsterHeader } from "../components/TipsterHeader"; 
-
-// --- TYPE DEFINITIONS (UPDATED) ---
+// --- TYPE DEFINITIONS (UNCHANGED) ---
 export type RacedayData = {
   comp_raceday_id: number; 
   raceday_id: number;
@@ -28,17 +26,16 @@ export type CompData = {
     tipster_slogan: string | null;
   }[];
   racedays: RacedayData[];
-  // 💡 NEW FIELD: Tipster nickname for the logged-in user
-  tipsterNickname: string | null; 
 };
 
-// --- LOADER FUNCTION: FETCHING COMPETITION AND TIPSTERS (UPDATED) ---
+// --- LOADER FUNCTION: FETCHING COMPETITION AND TIPSTERS (OPTIMIZED) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { supabaseClient } = createSupabaseServerClient(request);
+  const { supabaseClient, headers } = createSupabaseServerClient(request);
 
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-  if (userError || !user) {
-    return redirect("/auth");
+  // 💡 OPTIMIZATION: Use getSession() for a faster authentication check.
+  const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !session) {
+    return redirect("/auth", { headers });
   }
 
   const compId = params.comp_id; 
@@ -47,22 +44,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
   const numericCompId = Number(compId);
   
-  // 💡 NEW LOGIC: 1. Fetch the user's tipster NICKNAME
-  const { data: profile, error: profileError } = await supabaseClient
-    .from("user_profiles")
-    .select("tipster:tipster_id(tipster_nickname)")
-    .eq("id", user.id)
-    .single();
-
-  let tipsterNickname: string | null = null;
-  if (profileError || !profile || !profile.tipster) {
-    console.warn("User profile (tipster details) not found or error:", profileError);
-  } else {
-    tipsterNickname = profile.tipster.tipster_nickname;
-  }
-  // --- END NEW LOGIC ---
-
   // 2. Fetch competition and all participating tipsters
+  // (This heavy query is needed and cannot be easily deferred, but it's now decoupled from auth latency)
   const { data, error } = await supabaseClient
     .from("comp")
     .select(
@@ -99,20 +82,24 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const racedays: RacedayData[] = racedayData || [];
 
-  // 💡 UPDATED RETURN: Include tipsterNickname
-  return json({ compName, tipsters, racedays, tipsterNickname } as CompData);
+  // 💡 OPTIMIZATION: Add Cache-Control headers for layout data that changes infrequently.
+  return json(
+    { compName, tipsters, racedays } as CompData,
+    {
+      headers: {
+        'Cache-Control': 'max-age=180, private' // Cache this layout data for 3 minutes
+      }
+    }
+  );
 };
 
 
-// --- REACT COMPONENT: DISPLAYING DATA (UPDATED) ---
+// --- REACT COMPONENT: DISPLAYING DATA (UNCHANGED) ---
 export default function CompHome() {
-  const { compName, tipsters, racedays, tipsterNickname } = useLoaderData<typeof loader>();
+  const { compName, tipsters, racedays } = useLoaderData<typeof loader>();
   
   return (
     <div className="p-2 max-w-xl mx-auto lg:max-w-7xl"> 
-      
-      {/* PLACEMENT: TipsterHeader at the very top */}
-      <TipsterHeader nickname={tipsterNickname} />
       
       <h1 className="text-3xl font-heading font-extrabold text-main border-b pt-4 pb-2 pl-4">
         {compName}
@@ -122,7 +109,6 @@ export default function CompHome() {
       
       <CompTipsters tipsters={tipsters} />
       
-      {/* 💡 FIX: Pass the racedays prop to CompRacedayPast */}
       <CompRacedayPast racedays={racedays} /> 
 
       {/* The Outlet component renders the child route */}

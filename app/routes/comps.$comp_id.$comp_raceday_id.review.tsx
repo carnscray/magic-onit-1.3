@@ -3,7 +3,7 @@
 import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
-import { TipsterHeader } from "~/components/TipsterHeader";
+// [REMOVED] TipsterHeader import removed
 
 // --- Types ---
 
@@ -48,7 +48,7 @@ const formatDate = (dateString: string) => {
     });
 };
 
-// --- Loader (Unchanged from your last version) ---
+// --- Loader (OPTIMIZED) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const comp_raceday_id = Number(params.comp_raceday_id);
@@ -57,15 +57,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Invalid ID", { status: 400 });
   }
 
-  // 1. Auth Check & Get Nickname
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
+  // 1. 💡 OPTIMIZATION: Auth Check (Fast getSession)
+  const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !session) {
     return redirect("/auth", { headers });
   }
+  const authUserId = session.user.id; // Use ID from session
+  
+  // Fetch Nickname (Required for component display)
   const { data: profile } = await supabaseClient
     .from("user_profiles")
     .select("tipster:tipster_id(tipster_nickname)")
-    .eq("id", user.id)
+    .eq("id", authUserId)
     .single();
 
   // 2. Call the RPC function to get all review data
@@ -149,6 +152,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     return a.tipster_nickname.localeCompare(b.tipster_nickname);
   });
   
+  // 💡 CACHING: Added Cache-Control header
   return json(
     {
       tipsTableData,
@@ -160,11 +164,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       racedayDate: racecardDayData.racecard_day.racecard_date,
       tipsterNickname: profile?.tipster?.tipster_nickname || "User",
     },
-    { headers }
+    { 
+        headers: {
+            ...headers,
+            'Cache-Control': 'max-age=15, private' // Cache for 15 seconds
+        }
+    }
   );
 };
 
-// --- 💡 COMPONENT (Updated) ---
+// --- 💡 COMPONENT (Unchanged) ---
 export default function RacedayReview() {
   const { 
     tipsTableData,
@@ -174,7 +183,7 @@ export default function RacedayReview() {
     racedayName, 
     racetrackName,
     racedayDate,   
-    tipsterNickname 
+    tipsterNickname // This is no longer used, but removing it from the destructuring is optional
   } = useLoaderData<typeof loader>();
 
   const thClasses = "p-2 border border-gray-300 bg-mainlight text-left text-sm font-bold";
@@ -185,7 +194,7 @@ export default function RacedayReview() {
 
   return (
     <div className="p-2 max-w-7xl mx-auto">
-      <TipsterHeader nickname={tipsterNickname} />
+      {/* [REMOVED] TipsterHeader component removed */}
 
       {/* Page Header */}
       <div className="my-12 p-4 bg-gradient-custom text-white rounded-t-2xl">

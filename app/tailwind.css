@@ -8,23 +8,6 @@
 
 /* Path: app/styles/fonts.css (or similar) */
 
-/* Light (300) */
-@font-face {
-  font-family: 'Satoshi Custom';
-  /* CORRECTED PATH: Absolute path from the public/ root */
-  src: url('/fonts/Satoshi-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap; 
-}
-@font-face {
-  font-family: 'Satoshi Custom';
-  src: url('/fonts/Satoshi-LightItalic.woff2') format('woff2');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-
 /* Regular (400) */
 @font-face {
   font-family: 'Satoshi Custom';
@@ -33,27 +16,13 @@
   font-style: normal;
   font-display: swap;
 }
-@font-face {
-  font-family: 'Satoshi Custom';
-  src: url('/fonts/Satoshi-Italic.woff2') format('woff2');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
 
-/* Medium (500) */
+/* Medium (500) - Use this for your "semibold" look */
 @font-face {
   font-family: 'Satoshi Custom';
   src: url('/fonts/Satoshi-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Satoshi Custom';
-  src: url('/fonts/Satoshi-MediumItalic.woff2') format('woff2');
-  font-weight: 500;
-  font-style: italic;
   font-display: swap;
 }
 
@@ -65,53 +34,21 @@
   font-style: normal;
   font-display: swap;
 }
-@font-face {
-  font-family: 'Satoshi Custom';
-  src: url('/fonts/Satoshi-BoldItalic.woff2') format('woff2');
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-}
-
-/* Black (900) */
-@font-face {
-  font-family: 'Satoshi Custom';
-  src: url('/fonts/Satoshi-Black.woff2') format('woff2');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Satoshi Custom';
-  src: url('/fonts/Satoshi-BlackItalic.woff2') format('woff2');
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap;
-}
-
 
 
 /* Tailwind base layer override */
 @layer base {
 
+  /* 💡 MODIFICATION: Added the font-family */
   body, p, a, h3, h4 {
     font-family: 'Satoshi Custom', sans-serif;
-
-    
   }
 
-  h1 {
+  h1, h2 {
     font-family: 'Satoshi Custom', sans-serif;
-
-  }
-
-  h2 {
-    font-family: 'Satoshi Custom', sans-serif;
-
   }
 
 }
-
 
 
 
@@ -259,6 +196,10 @@
 
   .bg-alt {
     background-color: var(--color-alt);
+  }
+
+  .bg-altlight {
+    background-color: var(--color-altlight);
   }
 
   .bg-greymain {

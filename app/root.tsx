@@ -124,7 +124,7 @@ export default function App() {
       
       {/* 3. FOOTER */}
       <div className="bg-white "> 
-          <Footer />
+          <Footer user={user} />
       </div>
     </>
   );

@@ -9,7 +9,7 @@ import {
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
 
-// --- Types ---
+// --- Types (UNCHANGED) ---
 type RaceRunner = {
   runner_no: number;
   runner_name: string;
@@ -29,24 +29,26 @@ type CurrentTip = {
 
 type LoaderData = {
   races: RaceWithRunners[];
-  currentTips: Record<number, CurrentTip>; // { 1: { tip_main: 5 }, ... }
+  currentTips: Record<number, CurrentTip>; // { 1: { tip_main: 5, "alt": 2 }, ... }
   isLocked: boolean;
 };
 
-// --- Loader ---
+// --- Loader (REVERTED FOR SECURITY) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const comp_raceday_id = Number(params.comp_raceday_id);
 
-  // 1. Auth Check & Get Tipster ID
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
+  // 1. 💡 REVERTED: Auth Check (Heavy getUser() for Security)
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+  if (userError || !user) {
     return redirect("/auth", { headers });
   }
+  // const authUserId = user.id; // User ID is available directly
+
   const { data: profile } = await supabaseClient
     .from("user_profiles")
-    .select("tipster_id")
-    .eq("id", user.id)
+    .select("tipster_id") // Only fetch tipster_id
+    .eq("id", user.id) // Use authenticated user ID
     .single();
 
   if (!profile) {
@@ -119,13 +121,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     });
   }
 
+  // 💡 CACHING: Added Cache-Control header
   return json(
     { races, currentTips, isLocked },
-    { headers }
+    { 
+        headers: {
+            ...headers,
+            'Cache-Control': 'max-age=30, private' // Cache for 30 seconds
+        }
+    }
   );
 };
 
-// --- 💡 Action (MODIFIED) ---
+// --- 💡 Action (REVERTED FOR SECURITY) ---
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const formData = await request.formData();
@@ -133,15 +141,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const comp_raceday_id = Number(params.comp_raceday_id);
   const comp_id = Number(params.comp_id);
 
-  // 1. Auth Check & Get Tipster ID
+  // 1. 💡 REVERTED: Auth Check (Heavy getUser() for Security)
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) {
     return json({ error: "Not authorized" }, { status: 401, headers });
   }
+  // const authUserId = user.id; // User ID is available directly
+
   const { data: profile } = await supabaseClient
     .from("user_profiles")
-    .select("tipster_id")
-    .eq("id", user.id)
+    .select("tipster_id") // Only fetch tipster_id
+    .eq("id", user.id) // Use authenticated user ID
     .single();
 
   if (!profile) {
@@ -198,7 +208,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 
-// --- Component (Unchanged from your last version) ---
+// --- Component (UNCHANGED) ---
 export default function EditTips() {
   const { races, currentTips, isLocked } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
@@ -290,7 +300,8 @@ export default function EditTips() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="bg-main text-white font-semibold py-2 px-5 rounded-md hover:bg-alt disabled:opacity-50"
+                className="bg-alt text-white font-semibold py-2 px-5 rounded-md  active:bg-altlight active:scale-[0.9] transform"
+
               >
                 {isSaving ? "Saving..." : "Save All"}
               </button>

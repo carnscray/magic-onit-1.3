@@ -59,7 +59,7 @@ export default function CompRacedayLive({ racedays }: CompRacedayLiveProps) {
         <section className="my-12 rounded-2xl shadow-xl overflow-hidden">
             
             {/* ... Racedays Header (UNCHANGED) ... */}
-            <div className="flex items-center justify-between space-x-3 p-4 bg-gradient-customalt text-white rounded-t-2xl">
+            <div className="flex items-center justify-between space-x-3 p-4 bg-gradient-custom text-white rounded-t-2xl">
                 
                 {/* Left side: Icon and Title */}
                 <div className="flex items-center space-x-3">

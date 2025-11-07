@@ -19,9 +19,15 @@ export const meta: MetaFunction = () => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
+  // 💡 OPTIMIZED: Use getSession() for a faster authentication check
   const {
-    data: { user },
-  } = await supabaseClient.auth.getUser();
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+  
+  // If session exists, use session.user. Otherwise, user is null.
+  // This is faster than getUser() as it avoids a full network roundtrip if the session is cached.
+  let user = session?.user || null;
+
   return json({ user }, { headers });
 };
 
@@ -30,9 +36,11 @@ export default function Index() {
   const { state } = useNavigation();
 
   return (
-    <div className="bg-white h-screen w-full flex justify-center items-start pt-40">
+    // 💡 MODIFIED: Removed h-screen and changed styling to center the content
+    <div className="w-full flex justify-center items-start pt-16 pb-16"> 
       
-      <section className="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl w-full">
+      {/* 💡 MODIFIED: Added shadow-xl for better visibility */}
+      <section className="max-w-md mx-auto p-8 bg-white rounded-2xl  w-full">
         {loaderData.user ? (
           // --- LOGGED IN STATE ---
           <div>

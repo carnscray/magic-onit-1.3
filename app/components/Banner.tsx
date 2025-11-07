@@ -17,7 +17,6 @@ export function Banner({ user }: BannerProps) {
         
         {/* 1. Brand/Home Link (Left Side) */}
         <nav className="flex items-center space-x-4">
-
           {/* Competitions Icon */}
           <Link 
             to="/comps" 
@@ -33,19 +32,34 @@ export function Banner({ user }: BannerProps) {
           </Link>
         </nav>
 
-        {/* 2. User Profile Link (Right Side) */}
+        {/* 2. User Profile/Navigation (Right Side) */}
         <div className="flex items-center space-x-2"> 
             
-            {/* 💡 CHANGE: Display Tipster Nickname wrapped in a Link to /comps */}
+            {/* 💡 NEW: My Comps Link */}
+            <Link 
+                to="http://localhost:5173/comps" 
+                className="text-sm font-semibold text-white mr-0 hover:text-mainlight transition duration-150 whitespace-nowrap"
+            >
+                My Comps
+            </Link>
+            
             {user?.tipsterNickname && (
-                <Link 
-                    to="/comps" // Directs nickname click back to the competitions list
-                    className="text-sm font-semibold text-white mr-0  hover:text-mainlight transition duration-150"
-                >
-                    {user.tipsterNickname}
-                </Link>
+                <>
+                    {/* Separator */}
+                    <span className="text-white text-opacity-70">|</span> 
+
+                    {/* 💡 CHANGE 1: Tipster Nickname now links to /profile/edit */}
+                    <Link 
+                        to="/profile/edit" 
+                        className="text-sm font-semibold text-white mr-0 hover:text-mainlight transition duration-150 whitespace-nowrap"
+                        aria-label="Edit Profile"
+                    >
+                        {user.tipsterNickname}
+                    </Link>
+                </>
             )}
 
+            {/* 💡 CHANGE 2: Icon link (maintained) */}
             <Link 
               to="/profile/edit" 
               className={iconLinkClasses}

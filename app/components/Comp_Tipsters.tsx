@@ -58,7 +58,7 @@ export default function CompTipsters({ tipsters }: CompTipstersProps) {
                                 {tipster.tipster_nickname}
                             </p>
                             {tipster.tipster_slogan && (
-                                <p className="text-sm font-body text-greymain italic mt-1">
+                                <p className="text-sm font-body text-greymain mt-1">
                                     {tipster.tipster_slogan}
                                 </p>
                             )}

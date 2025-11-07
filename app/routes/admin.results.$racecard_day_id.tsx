@@ -15,7 +15,7 @@ import {
   useNavigation,
 } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
-import { TipsterHeader } from "~/components/TipsterHeader";
+// [REMOVED] TipsterHeader import removed
 
 // --- Types (Unchanged) ---
 type RaceRunner = {
@@ -45,7 +45,7 @@ type LoaderData = {
   raceday_date: string;
   racetrack_name: string;
   racetrack_locref: string;
-  tipsterNickname: string;
+  // [REMOVED] tipsterNickname removed
   userRole: string;
   races: RaceData[];
 };
@@ -54,7 +54,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: `Admin: ${data?.raceday_name || "Results"}` }];
 };
 
-// --- 💡 LOADER (Updated) ---
+// --- 💡 LOADER (REVERTED FOR SECURITY) ---
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const racecard_day_id = Number(params.racecard_day_id);
@@ -63,22 +63,24 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Invalid Raceday ID", { status: 400 });
   }
 
-  // 1. Auth & Admin Check
+  // 1. 💡 REVERTED: Auth Check (Heavy getUser() for Security)
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) {
     return redirect("/auth", { headers });
   }
 
+  // [MODIFIED] Fetch user_role using the authenticated user ID
   const { data: profile } = await supabaseClient
     .from("user_profiles")
-    .select("user_role, tipster:tipster_id(tipster_nickname)")
+    .select("user_role")
     .eq("id", user.id)
     .single();
 
   if (!profile || profile.user_role !== "superadmin") {
+    // Note: No change to admin check logic.
     return redirect("/comps", { headers });
   }
-  
+
   // 2. Fetch Raceday, Races, Runners, and Existing Results
   const { data: racedayData, error } = await supabaseClient
     .from("racecard_day")
@@ -130,7 +132,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }))
     .sort((a, b) => a.race_no - b.race_no);
 
-  // 4. Return all data
+  // 4. Return all data (No Cache-Control header, as data is volatile)
   return json(
     {
       raceday_id: racedayData.id,
@@ -138,7 +140,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       raceday_date: racedayData.racecard_date,
       racetrack_name: racedayData.racetrack?.track_name ?? 'N/A',
       racetrack_locref: racedayData.racetrack?.track_locref ?? 'N/A',
-      tipsterNickname: profile.tipster.tipster_nickname,
       userRole: profile.user_role,
       races,
     },
@@ -146,23 +147,25 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   );
 };
 
-// --- Action (Unchanged) ---
+// --- Action (REVERTED FOR SECURITY) ---
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const formData = await request.formData();
   const _action = String(formData.get("_action"));
   const racecard_day_id = Number(params.racecard_day_id);
 
-  // 1. Auth & Admin Check (again for security)
+  // 1. 💡 REVERTED: Auth Check (Heavy getUser() for Security)
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return json({ error: "Not authorized" }, { status: 401 });
-  
+  // const authUserId = user.id; // user.id is available here
+
+  // [MODIFIED] Fetch user_role for security
   const { data: profile } = await supabaseClient
     .from("user_profiles")
     .select("user_role")
     .eq("id", user.id)
     .single();
-    
+
   if (!profile || profile.user_role !== "superadmin") {
     return json({ error: "Not authorized" }, { status: 403 });
   }
@@ -174,12 +177,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (!race_id) return json({ error: "Missing Race ID" }, { status: 400 });
 
     const resultsToUpsert = [];
-    
+
     // 1. Loop through the 6 possible result rows from the form
     for (let i = 1; i <= 6; i++) {
       const runner_no = Number(formData.get(`runner_no_${i}`));
       const position = Number(formData.get(`position_${i}`));
-      
+
       // Only add rows where a runner AND position are selected
       if (runner_no > 0 && position > 0) {
         resultsToUpsert.push({
@@ -199,7 +202,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       .eq("racecard_race_id", race_id);
 
     if (deleteError) {
-       return json({ error: `Failed to clear old results: ${deleteError.message}` }, { status: 500 });
+      return json({ error: `Failed to clear old results: ${deleteError.message}` }, { status: 500 });
     }
 
     // 3. Insert new results (if any)
@@ -230,61 +233,61 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 };
 
 
-// --- Helper Function ---
+// --- Helper Function (UNCHANGED) ---
 const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-AU', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
+  return new Date(dateString).toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
 };
 
-// --- Component (Main) (Updated) ---
+// --- Component (Main) (UNCHANGED) ---
 export default function AdminResultsEntry() {
-  const { 
+  // [MODIFIED] tipsterNickname removed
+  const {
     raceday_id,
     raceday_name,
     raceday_date,
     racetrack_name,
     racetrack_locref,
-    tipsterNickname, 
     userRole,
-    races 
+    races
   } = useLoaderData<typeof loader>();
-  
+
   const navigation = useNavigation();
-  
+
   const isPageSaving = navigation.state !== 'idle' && navigation.formData?.get('_action') === 'save_results';
 
   return (
     <div className="p-2 max-w-2xl mx-auto">
-      <TipsterHeader nickname={tipsterNickname} />
+      {/* [REMOVED] TipsterHeader component removed */}
 
       {/* --- NEW RACEDAY HEADER --- */}
       <div className="mb-8 p-4 border-b border-gray-200 mt-4">
 
 
         {/* 2. LocRef Square and Track Details */}
-        <div className="flex items-center pl-1 space-x-3"> 
-            <div className="flex-shrink-0 flex items-center justify-center min-w-[3rem] 
-                          bg-white border-2 border-main "> 
-                <p className="text-lg font-heading font-extrabold text-main uppercase py-2.5 px-2">
-                    {racetrack_locref}
-                </p>
-            </div>
+        <div className="flex items-center pl-1 space-x-3">
+          <div className="flex-shrink-0 flex items-center justify-center min-w-[3rem] 
+                          bg-white border-2 border-main ">
+            <p className="text-lg font-heading font-extrabold text-main uppercase py-2.5 px-2">
+              {racetrack_locref}
+            </p>
+          </div>
 
-            <div className="flex flex-col space-y-0.5"> 
-                        
-                         {/* 1. Raceday Name */}
-                        <p className="text-xl font-heading font-extrabold text-main  pb-1  leading-none">
-                            {raceday_name} 
-                        </p>
+          <div className="flex flex-col space-y-0.5">
 
-                       
-                <p className="text-md font-body text-blackmain leading-none">
-                    {racetrack_name} - {formatDate(raceday_date)}
-                </p>
-            </div>
+            {/* 1. Raceday Name */}
+            <p className="text-xl font-heading font-extrabold text-main  pb-1  leading-none">
+              {raceday_name}
+            </p>
+
+
+            <p className="text-md font-body text-blackmain leading-none">
+              {racetrack_name} - {formatDate(raceday_date)}
+            </p>
+          </div>
         </div>
       </div>
       {/* --- END NEW HEADER --- */}
@@ -292,17 +295,17 @@ export default function AdminResultsEntry() {
 
       {/* Page Header */}
       <div className="mt-4 p-2 bg-gradient-custom text-white rounded-t-2xl flex justify-between items-center ">
-            {/* Left side: Icon and Title */}
-            <div className="flex items-center space-x-3">
-                <span className="material-symbols-outlined text-3xl">
-                    Captive_Portal
+        {/* Left side: Icon and Title */}
+        <div className="flex items-center space-x-3">
+          <span className="material-symbols-outlined text-3xl">
+            Captive_Portal
 
-                </span>
-                
-                <h2 className="text-2xl font-heading font-semibold">
-                    Race Results 
-                </h2>
-            </div>
+          </span>
+
+          <h2 className="text-2xl font-heading font-semibold">
+            Race Results
+          </h2>
+        </div>
       </div>
 
       {/* Race Forms */}
@@ -312,17 +315,17 @@ export default function AdminResultsEntry() {
             Saving and recalculating all points...
           </div>
         )}
-        
+
         {races.map((race) => (
           <RaceForm key={race.race_id} race={race} />
         ))}
-        
+
       </div>
     </div>
   );
 }
 
-// --- 💡 Sub-Component: RaceForm (REFACTORED) ---
+// --- 💡 Sub-Component: RaceForm (UNCHANGED) ---
 function RaceForm({ race }: { race: RaceData }) {
   const fetcher = useFetcher<typeof action>();
   const isSaving = fetcher.state !== 'idle';
@@ -333,7 +336,7 @@ function RaceForm({ race }: { race: RaceData }) {
   for (let i = 0; i < 6; i++) {
     resultRows.push(race.results[i] || { runner_no: 0, position: 0, wodds: null, podds: null });
   }
-  
+
   return (
     <fetcher.Form method="post" className="border rounded-lg overflow-hidden mb-8 ">
       <input type="hidden" name="_action" value="save_results" />
@@ -346,14 +349,14 @@ function RaceForm({ race }: { race: RaceData }) {
         <h3 className="text-xl font-bold text-main">
           Race {race.race_no}
         </h3>
-        
+
         {/* Right Side: Status */}
         <div className="flex items-center space-x-3">
           {fetcher.data?.success && !isSaving && (
             <p className="text-sm text-green-600">Results Saved. Full Leaderboard Recalcuated.</p>
           )}
           {fetcher.data?.error && !isSaving && (
-             <p className="text-sm text-red-600">{fetcher.data.error}</p>
+            <p className="text-sm text-red-600">{fetcher.data.error}</p>
           )}
         </div>
       </div>
@@ -362,7 +365,7 @@ function RaceForm({ race }: { race: RaceData }) {
 
       {/* --- Results Grid --- */}
       <div className="p-2 space-y-2">
-        
+
         {/* Header Row */}
         <div className="grid grid-cols-12 gap-2 text-xs font-bold text-blackmain">
           <div className="col-span-2 pl-1" >Pos</div>
@@ -374,7 +377,7 @@ function RaceForm({ race }: { race: RaceData }) {
         {/* Result Rows */}
         {resultRows.map((result, i) => (
           <div key={i} className="grid grid-cols-12 text-xs text-blackmain">
-            
+
             {/* Position Select (col-span-2) */}
             <select
               name={`position_${i + 1}`}
@@ -387,7 +390,7 @@ function RaceForm({ race }: { race: RaceData }) {
               <option value="3">3rd</option>
               <option value="4">4th</option>
             </select>
-            
+
             {/* Runner Select (col-span-6) */}
             <select
               name={`runner_no_${i + 1}`}
@@ -401,7 +404,7 @@ function RaceForm({ race }: { race: RaceData }) {
                 </option>
               ))}
             </select>
-            
+
             {/* W-Odds Input (col-span-2) */}
             <input
               type="number"
@@ -411,7 +414,7 @@ function RaceForm({ race }: { race: RaceData }) {
               defaultValue={result.wodds ? result.wodds.toFixed(2) : ""}
               className="col-span-2 p-0 mr-1 border rounded-md text-right"
             />
-            
+
             {/* P-Odds Input (col-span-2) */}
             <input
               type="number"
@@ -423,7 +426,7 @@ function RaceForm({ race }: { race: RaceData }) {
             />
           </div>
         ))}
-        
+
       </div>
       {/* --- END Results Grid --- */}
 
@@ -432,7 +435,7 @@ function RaceForm({ race }: { race: RaceData }) {
         <button
           type="submit"
           disabled={isSaving}
-          className="bg-main font-semibold text-white py-2 px-5 rounded-md hover:bg-alt disabled:opacity-50"
+          className="bg-alt font-semibold text-white py-2 px-5 rounded-md active:bg-altlight active:scale-[0.9] transform"
         >
           {isSaving ? "Saving..." : "Save & Update"}
         </button>

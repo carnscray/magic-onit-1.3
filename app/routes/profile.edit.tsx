@@ -14,13 +14,13 @@ import {
   useNavigation,
 } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
-import { TipsterHeader } from "~/components/TipsterHeader"; // Assuming this is the correct path
+// [REMOVED] TipsterHeader import removed
 
 export const meta: MetaFunction = () => {
   return [{ title: "Edit Profile" }];
 };
 
-// --- TYPE DEFINITION for loader data ---
+// --- TYPE DEFINITION for loader data (UNCHANGED) ---
 type ProfileData = {
   tipster: {
     id: number;
@@ -30,32 +30,33 @@ type ProfileData = {
   };
 };
 
-// --- LOADER: Fetch current profile data ---
+// --- LOADER: Fetch current profile data (REVERTED FOR SECURITY) ---
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
 
-  // 1. Get user
+  // 1. 💡 REVERTED: Get user using the secure, heavy getUser() call
   const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
   if (userError || !user) {
     return redirect("/auth", { headers });
   }
 
-  // 2. Get tipster profile data
+  // 2. 💡 MODIFIED: Get all required profile data using the authenticated user.id
   const { data: profileData, error: profileError } = await supabaseClient
     .from("user_profiles")
     .select("tipster:tipster_id(id, tipster_fullname, tipster_nickname, tipster_slogan)")
-    .eq("id", user.id)
-    .single(); // Use .single() as user must have a profile
+    .eq("id", user.id) // Use authenticated user ID
+    .single();
 
   if (profileError || !profileData || !profileData.tipster) {
     console.error("Error fetching profile for edit:", profileError);
-    return redirect("/comps", { headers }); // Redirect to comps if profile fails
+    return redirect("/comps", { headers });
   }
 
+  // No specific Cache-Control is needed here.
   return json({ tipster: profileData.tipster }, { headers });
 };
 
-// --- ACTION: Update profile data ---
+// --- ACTION: Update profile data (REVERTED FOR SECURITY) ---
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { supabaseClient, headers } = createSupabaseServerClient(request);
   const formData = await request.formData();
@@ -71,21 +72,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // 1. Get user and tipster_id
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
+  // 1. 💡 REVERTED: Get user using the secure, heavy getUser() call
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+  if (userError || !user) {
     return json({ success: false, error: "Not authorized." }, { status: 401, headers });
   }
 
   const { data: profile } = await supabaseClient
     .from("user_profiles")
     .select("tipster_id")
-    .eq("id", user.id)
+    .eq("id", user.id) // Use authenticated user ID
     .single();
 
   if (!profile) {
     return json({ success: false, error: "Profile not found." }, { status: 404, headers });
   }
+  const tipster_id = profile.tipster_id;
 
   // 2. Update the tipster table
   const { error: updateError } = await supabaseClient
@@ -95,7 +97,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       tipster_nickname: nickname,
       tipster_slogan: slogan || null, // Ensure empty string becomes null
     })
-    .eq("id", profile.tipster_id);
+    .eq("id", tipster_id);
 
   if (updateError) {
     return json(
@@ -104,12 +106,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  // Use redirect to force a full page reload, which ensures
-  // the Banner in the root layout fetches the new nickname.
+  // 3. Success. Redirect back to the comps page.
   return redirect("/comps", { headers });
 };
 
-// --- COMPONENT: Profile Edit Form ---
+// --- COMPONENT: Profile Edit Form (UNCHANGED) ---
 export default function EditProfile() {
   const { tipster } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -118,7 +119,7 @@ export default function EditProfile() {
 
   return (
     <div className="p-2 max-w-xl mx-auto lg:max-w-7xl">
-      <TipsterHeader nickname={tipster.tipster_nickname} />
+      {/* [REMOVED] TipsterHeader component removed */}
 
       <section className="my-12 rounded-2xl shadow-xl overflow-hidden">
         {/* Header Styling */}
@@ -183,7 +184,7 @@ export default function EditProfile() {
                   name="slogan"
                   id="slogan"
                   defaultValue={tipster.tipster_slogan || ""}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm active:outline-none active:ring-main active:border-main"
                 />
               </div>
 
@@ -197,7 +198,7 @@ export default function EditProfile() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="w-full sm:w-auto bg-alt text-white py-2 px-6 rounded-md active:bg-altlight active:scale-[0.9] transform"
                 >
                   {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>

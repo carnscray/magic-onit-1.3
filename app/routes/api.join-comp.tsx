@@ -16,16 +16,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ error: "CompID and code are required." }, { status: 400, headers });
   }
 
-  // 1. Get the logged-in user's tipster_id
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-  if (userError || !user) {
+  // 1. 💡 OPTIMIZATION: Auth Check (Fast getSession)
+  const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !session) {
     return json({ error: "You must be logged in." }, { status: 401, headers });
   }
+  const authUserId = session.user.id;
 
+  // Fetch ONLY the tipster_id
   const { data: profile, error: profileError } = await supabaseClient
     .from("user_profiles")
     .select("tipster_id")
-    .eq("id", user.id)
+    .eq("id", authUserId)
     .single();
 
   if (profileError || !profile) {

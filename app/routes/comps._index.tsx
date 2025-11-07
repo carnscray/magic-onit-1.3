@@ -2,32 +2,33 @@
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, Link, useFetcher } from "@remix-run/react"; // <-- ADD useFetcher
+import { useLoaderData, Link, useFetcher } from "@remix-run/react";
 import { createSupabaseServerClient } from "~/supabase/supabase.server";
-import { TipsterHeader } from "../components/TipsterHeader"; 
-import { useState, useEffect } from "react"; // <-- ADD useState, useEffect
 
-// --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS ---
-// (This loader function remains unchanged from Step 27)
+import { useState, useEffect } from "react";
+
+// --- LOADER FUNCTION: FETCHING TIPSTER AND COMPETITIONS (MODIFIED FOR SPEED) ---
 export const loader = async ({ request }: LoaderFunctionArgs) => { 
   const { supabaseClient, headers } = createSupabaseServerClient(request);
 
-  // 1. Check for logged-in user session (SECURELY)
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(); 
+  // 1. 💡 MODIFIED: Use getSession to quickly check authentication status
+  const { data: { session } } = await supabaseClient.auth.getSession(); 
   
-  if (userError || !user) {
+  if (!session) {
+    // This is the fastest way to check if a user is logged in
     return redirect("/auth", { headers });
   }
 
-  // 2. Get the logged-in Supabase user ID (UUID)
-  const authUserId = user.id;
+  // 2. [REMOVED] Redundant fetch of user ID and profile data is removed.
+  const authUserId = session.user.id; 
 
-  // 3. Fetch the associated tipster details (ID, Nickname, Slogan)
+  // 3. 💡 MODIFIED: Fetch ONLY the tipster ID and user role necessary for THIS route's logic.
+  //    This replaces the slow, repeated 'user_profiles' query from the old Step 3.
   const { data: profileData, error: profileError } = await supabaseClient
     .from("user_profiles")
-    .select("tipster:tipster_id(id, tipster_nickname, tipster_slogan)")
+    .select("tipster:tipster_id(id)") // Only need the tipster ID
     .eq("id", authUserId) 
-    .maybeSingle();
+    .single();
 
   if (profileError) {
      console.error("Loader Error (Step 3):", profileError.message);
@@ -35,12 +36,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   if (!profileData || !profileData.tipster) {
-    console.error("Loader Error (Step 3): No profile data or tipster link found.");
+    console.error("Loader Error (Step 3): No tipster link found.");
     return redirect("/auth", { headers }); 
   }
 
   const tipsterId = profileData.tipster.id;
-  const tipsterDetails = profileData.tipster;
 
   // 4. Fetch the competition names, slogan, and privacy
   const { data: compsData, error: compsError } = await supabaseClient
@@ -55,37 +55,34 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // 4.5. Check for zero competitions
   if (!compsData || compsData.length === 0) {
-    return json({ competitions: [], tipsterDetails }, { headers });
+    return json({ competitions: [] }, { headers });
   }
 
-  // Extract the competition objects.
-  let competitions = compsData.map(item => item.comp);
+  // 💡 MODIFIED: Extract the competition objects directly.
+  const competitions = compsData.map(item => ({
+    ...item.comp,
+    tipster_count: 0, // Placeholder
+  }));
   
-  // 5. Call the RPC function for each competition
-  const competitionsWithCount = await Promise.all(
-    competitions.map(async (comp: any) => {
-      const { data: countData, error: countError } = await supabaseClient.rpc(
-        'get_tipster_count_by_comp', 
-        { comp_id_in: comp.id } 
-      );
-      
-      if (countError) {
-        console.error(`Loader Error (Step 5 RPC):`, countError.message);
-        return { ...comp, tipster_count: 0 }; 
-      }
-      return {
-        ...comp,
-        tipster_count: countData as number,
-      };
-    })
-  );
 
-  return json({ competitions: competitionsWithCount, tipsterDetails }, { headers });
+  // 5. [REMOVED] The slow Promise.all and RPC call for tipster count is removed.
+
+  // 💡 CACHING ADDED: Return the competition data with Cache-Control header.
+  return json(
+    { competitions }, 
+    { 
+      headers: {
+        ...headers,
+        'Cache-Control': 'max-age=60, private' // Cache for 60 seconds
+      } 
+    }
+  );
 };
 
 // --- REACT COMPONENT: RENDERING DATA (MODIFIED) ---
 export default function Comps() {
-  const { competitions, tipsterDetails } = useLoaderData<typeof loader>();
+  // The 'competitions' type no longer contains 'tipster_count' here.
+  const { competitions } = useLoaderData<typeof loader>(); 
   const fetcher = useFetcher<typeof import("~/routes/api.join-comp").action>();
 
   // State to control the modal visibility
@@ -109,7 +106,6 @@ export default function Comps() {
       setIsModalOpen(false);
       // The loader for this page will automatically re-run because
       // the fetcher POSTed and we returned { revalidate: true }
-      // (though Remix often revalidates by default on POSTs)
     }
   }, [actionData]);
 
@@ -118,7 +114,6 @@ export default function Comps() {
     <>
       <div className="p-2 max-w-xl mx-auto lg:max-w-7xl">
         
-        <TipsterHeader nickname={tipsterDetails.tipster_nickname} />
 
       <section className="my-12 rounded-2xl shadow-xl overflow-hidden"> 
           
@@ -136,12 +131,15 @@ export default function Comps() {
                   </h2>
               </div>
               
-              {/* --- MODIFICATION: Icon is now a button --- */}
+              {/* --- 💡 MODIFICATION: Icon and Text Button --- */}
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="material-symbols-outlined text-3xl cursor-pointer hover:opacity-75"
+                className="flex items-center space-x-2 text-lg font-medium cursor-pointer hover:opacity-75"
+                aria-label="Join a Competition"
               >
-                  share
+                <span>Join</span> {/* 💡 ADDED TEXT */}
+                <span className="material-symbols-outlined text-3xl">share</span>
+                
               </button>
               {/* --- END MODIFICATION --- */}
 
@@ -161,29 +159,23 @@ export default function Comps() {
                       {visibleComps.map((comp: any) => (
                           <li 
                               key={comp.id} 
-                              className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 hover:shadow-xl transition-shadow relative" 
+                              className="relative" 
                           >
                               <Link 
                                   to={`/comps/${comp.id}`} 
-                                  className="block"
+                                  className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 transition-all duration-200 block w-full h-full 
+                                             hover:shadow-xl hover:bg-mainlight active:bg-second active:scale-[0.9] transform"
                               >
                                   <div className="flex items-start justify-between">
                                       <div className="flex-grow min-w-0 pr-4">
                                           <p className="text-xl font-heading font-bold text-main whitespace-normal break-words"> 
                                               {comp.comp_name}
                                           </p>
-                                          <p className="text-sm font-body text-gray-500 italic whitespace-normal break-words mt-0.5"> 
-                                              {comp.comp_slogan || "A challenging competition awaits!"}
+                                          <p className="text-sm font-body text-gray-500  whitespace-normal break-words mt-0.5"> 
+                                              {comp.comp_slogan || "-"}
                                           </p>
                                       </div>
-                                      <div className="flex items-center space-x-1 flex-shrink-0">
-                                          <span className="material-symbols-outlined text-2xl text-main">
-                                              emoji_people
-                                          </span>
-                                          <span className="flex items-center justify-center h-8 w-8 rounded-full bg-second text-main text-lg font-bold shadow-md">
-                                              {comp.tipster_count}
-                                          </span>
-                                      </div>
+                                      {/* 💡 REMOVED: Tipster count icon and circle removed block is here */}
                                   </div>
                               </Link>
                           </li>

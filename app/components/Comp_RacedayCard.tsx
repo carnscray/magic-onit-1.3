@@ -1,14 +1,17 @@
 // app/components/Comp_RacedayCard.tsx
 
 import { Link } from "@remix-run/react"; 
-import type { RacedayData } from "../routes/comps.$comp_id"; 
+import type { RacedayData } from "../routes/comps.$comp_id._layout"; // Corrected path assumption
+// NOTE: Assuming the correct path to RacedayData type is available via the parent layout file
+// If the path needs adjustment: import type { RacedayData } from "~/routes/comps.$comp_id.$comp_raceday_id"; 
+
 
 // Prop definition - Reuses the RacedayData type
 type CompRacedayCardProps = {
     raceday: RacedayData;
 };
 
-// --- DATE HELPER FUNCTIONS ---
+// --- DATE HELPER FUNCTIONS (UNCHANGED) ---
 
 // Robust helper function: Parses YYYY-MM-DD string into a Date object in local time at midnight
 const parseLocalDay = (dateString: string) => {
@@ -59,9 +62,16 @@ export default function CompRacedayCard({ raceday }: CompRacedayCardProps) {
     return (
         <li 
             key={raceday.comp_raceday_id} 
-            className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 hover:shadow-xl transition-shadow"
+            // 🛑 MODIFIED: List item is now just a relative wrapper
+            className="relative"
         >
-            <Link to={`${raceday.comp_raceday_id}`}>
+            {/* 🛑 MODIFIED: Link wraps the entire content and holds the card styling */}
+            <Link 
+                to={`${raceday.comp_raceday_id}`}
+                // 💡 ADDED: Styling moved from <li>. Added interaction feedback.
+                className="p-4 bg-white shadow-lg rounded-lg border border-gray-100 transition-all duration-200 block w-full h-full 
+                           hover:shadow-xl hover:bg-mainlight active:bg-second active:scale-[0.9] transform"
+            >
                 
                 {/* LAYOUT: LocRef + Details Container */}
                 <div className="flex items-start space-x-4">
@@ -80,7 +90,6 @@ export default function CompRacedayCard({ raceday }: CompRacedayCardProps) {
                         {/* ------------------- MODIFICATION START ------------------- */}
 
                         {/* 2a. TOP ROW: Raceday Name (Left) */}
-                        {/* Removed 'truncate', added 'whitespace-normal' and 'break-words' */}
                         <p className="text-lg font-heading font-bold text-main whitespace-normal break-words"> 
                             {raceday.raceday_name}
                         </p>
