@@ -345,9 +345,9 @@ export default function RacedayDetail() {
   const isLoadingRacecard = racecardFetcher.state === 'loading';
   const isLoadingReview = reviewFetcher.state === 'loading';
 
-  // --- Lockout Check (UNCHANGED) ---
+// --- Lockout Check (UPDATED) ---
   let isLocked = false;
-  const now = new Date("2025-10-25T09:00:00+11:00"); 
+  const now = new Date(); // 💡 MODIFIED: Use the actual current date and time
   if (lightData.cutoffTime) {
     const cutoff = new Date(lightData.cutoffTime);
     if (now > cutoff) {

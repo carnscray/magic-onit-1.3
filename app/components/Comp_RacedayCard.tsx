@@ -31,11 +31,20 @@ const formatDate = (dateString: string) => {
 
 // Helper to determine the status badge text and style
 const getRacedayStatus = (racedayDateString: string) => {
-    // 💡 NOTE: Use this for consistency with your parent component's filtering logic
-    const MANUAL_TODAY_STRING = '2025-10-25'; 
     
+    // 💡 MODIFIED: Use today's date dynamically
+    // 1. Get today's date
+    const todayDateObj = new Date();
+    
+    // 2. Format it as 'YYYY-MM-DD'
+    const year = todayDateObj.getFullYear();
+    const month = String(todayDateObj.getMonth() + 1).padStart(2, '0'); // getMonth() is 0-indexed
+    const day = String(todayDateObj.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`; 
+
+    // 3. Use the dynamic string in your existing function
     const racedayDate = parseLocalDay(racedayDateString);
-    const today = parseLocalDay(MANUAL_TODAY_STRING);
+    const today = parseLocalDay(todayString); // Replaces MANUAL_TODAY_STRING
 
     const dayTime = racedayDate.getTime();
     const todayTime = today.getTime();
@@ -48,9 +57,15 @@ const getRacedayStatus = (racedayDateString: string) => {
     if (dayTime === todayTime) {
         return { text: "TODAY", style: "bg-alert text-white" };
     } else if (dayTime === yesterdayTime) {
-        return { text: "YESTERDAY", style: "bg-mainlight text-white" };
+        return { text: "YESTERDAY", style: "bg-mainlight text-white" }; // NOTE: This was orange-500, check if this should be mainlight
     } else {
-        return { text: "UPCOMING", style: "bg-alt text-white" };
+        // 💡 NEW LOGIC: Differentiate between upcoming and past (which shouldn't appear here)
+        if (dayTime > todayTime) {
+            return { text: "UPCOMING", style: "bg-alt text-white" };
+        } else {
+            // This case handles dates older than yesterday, though RacedayLive shouldn't show them.
+             return { text: "PAST", style: "bg-gray-400 text-white" };
+        }
     }
 };
 
