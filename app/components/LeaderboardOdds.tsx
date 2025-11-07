@@ -12,7 +12,7 @@ interface LeaderboardOddsProps {
 }
 
 // Number of rows to display initially and add per 'Load More' click
-const INITIAL_ROWS = 6; // Matching LeaderboardPoints change
+const INITIAL_ROWS = 4; // Matching LeaderboardPoints change
 const ROWS_PER_LOAD = 10; // Matching LeaderboardPoints change
 
 /**

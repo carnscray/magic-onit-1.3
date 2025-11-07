@@ -5,12 +5,13 @@ import {
     RaceResultDetail, 
     RacedayHeaderData,
     SubTipCombo
-} from "~/routes/comps.$comp_id.$comp_raceday_id";
+} from "~/routes/comps.$comp_id.$comp_raceday_id.tsx"; // Ensure .tsx is included
 
 // Define props for the component
 interface NextToJumpSummaryProps {
     racedayHeader: RacedayHeaderData; 
-    raceResults: RaceResultDetail[];
+    // 💡 MODIFIED: Allow raceResults to be null or undefined
+    raceResults: RaceResultDetail[] | null | undefined; 
     nextToJumpIndex: number; 
 }
 
@@ -23,30 +24,44 @@ export function NextToJumpSummary({
     nextToJumpIndex 
 }: NextToJumpSummaryProps) {
     
-    // Case 1: All races are complete
-    if (nextToJumpIndex === -1) {
-        return (
-            <div className="p-4 bg-white rounded-2xl shadow-lg border border-green-300">
-                <p className="font-heading font-extrabold text-xl text-main flex items-center space-x-3">
-                    <span className="material-symbols-outlined text-main text-3xl">
-                        check_circle
-                    </span>
-                    <span>Day Complete! 🏁</span>
-                </p>
-                <p className="text-sm text-gray-500 mt-2 pl-9">All race results have been posted for the {racedayHeader.raceday_name} meeting.</p>
-            </div>
-        );
+    // 💡 MODIFIED: Safely default raceResults to an empty array
+    const results = raceResults || [];
+
+    // Case 1: If data hasn't loaded yet, or all races are complete.
+    if (nextToJumpIndex === -1 || results.length === 0) {
+        // NOTE: We rely on the parent component's loading message if results.length === 0
+        // If results.length === 0 AND nextToJumpIndex === -1, it means the entire list was empty.
+        
+        // Ensure this block only runs if the day is truly complete based on the index.
+        if (nextToJumpIndex === -1 && results.length > 0) {
+             return (
+                <div className="p-4 bg-white rounded-2xl shadow-lg border border-green-300">
+                    <p className="font-heading font-extrabold text-xl text-main flex items-center space-x-3">
+                        <span className="material-symbols-outlined text-main text-3xl">
+                            check_circle
+                        </span>
+                        <span>Day Complete! 🏁</span>
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2 pl-9">All race results have been posted for the {racedayHeader.raceday_name} meeting.</p>
+                </div>
+            );
+        }
+        // If the array is empty (i.e., data hasn't loaded yet), return null, allowing the button to show.
+        if (results.length === 0) {
+            return null; 
+        }
     }
 
     // Case 2: A race is next to jump
-    const nextRace = raceResults[nextToJumpIndex];
+    const nextRace = results[nextToJumpIndex];
 
     if (!nextRace) {
         return null;
     }
 
     // Get data for the summary
-    const runners = nextRace.allRunners || [];
+    // These properties are ONLY available after the heavy load is complete.
+    const runners = nextRace.allRunners || []; 
     const uniqueSubTips = nextRace.uniqueSubTips || []; 
     const raceNotes = nextRace.race_notes || 'No special notes or prize money details available.';
     
@@ -59,7 +74,7 @@ export function NextToJumpSummary({
     return (
         <div className="shadow-lg rounded-2xl overflow-hidden">
             
-
+            {/* Header rendering logic remains unchanged */}
             <div className="flex items-center justify-between p-4 bg-gradient-custom text-white rounded-t-2xl">
                 
                 {/* Left side: Icon and Heading */}
@@ -90,6 +105,7 @@ export function NextToJumpSummary({
 
                 
                 {/* --- TIPSTER MARKET CONSENSUS SECTION --- */}
+                {/* This section only renders if runners.length > 0 (i.e., after heavy load) */}
                 {runners.length > 0 && (
                     <div className="mt-0 pt-4 ">
                         
@@ -126,7 +142,7 @@ export function NextToJumpSummary({
                                 return (
                                     <div key={runner.runner_no} className="flex items-center text-sm pl-4 pr-6 ">
                                         {/* Runner Name/No Column */}
-                                        <div className="w-8/12 flex items-center pr-2">
+                                        <div className="w-8/12 flex items-center pr-2"> 
                                             <span className="font-extrabold text-main mr-1 text-sm w-5 text-right flex-shrink-0">
                                                 {runner.runner_no}.
                                             </span>
@@ -158,6 +174,7 @@ export function NextToJumpSummary({
                 )}
                 
                 {/* --- UNIQUE SUB TIPS SECTION --- */}
+                {/* This section only renders if uniqueSubTips.length > 0 (i.e., after heavy load) */}
                 {uniqueSubTips.length > 0 && (
                     <div className="mt-4 pt-4 pl-4 pr-4">
                         

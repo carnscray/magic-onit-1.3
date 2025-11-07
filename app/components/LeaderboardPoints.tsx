@@ -10,7 +10,7 @@ interface LeaderboardPointsProps {
 }
 
 // Number of rows to display initially and add per 'Load More' click
-const INITIAL_ROWS = 6;
+const INITIAL_ROWS = 4;
 const ROWS_PER_LOAD = 10;
 
 /**

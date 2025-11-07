@@ -1,13 +1,18 @@
 // MyTipsSection.tsx (Final Update)
 
 // Import the necessary types from your main route file for strong typing
-import type { TipDetail } from "./comps.$comp_id.$comp_raceday_id";
+import type { TipDetail } from "~/routes/comps.$comp_id.$comp_raceday_id.tsx"; // Ensure .tsx is included and path is correct
 
 interface MyTipsSectionProps {
-    userTips: TipDetail[];
+    // 💡 MODIFIED: Allow userTips to be null or undefined for deferred loading safety
+    userTips: TipDetail[] | null | undefined;
 }
 
 export function MyTipsSection({ userTips }: MyTipsSectionProps) {
+    
+    // 💡 MODIFIED: Safely default userTips to an empty array
+    const tips = userTips || [];
+
     return (
         <div className="w-full">
             
@@ -29,7 +34,8 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                 </span>
             </div>
 
-            {userTips.length === 0 ? (
+            {/* 💡 MODIFIED: Check the safely defaulted 'tips' array length */}
+            {tips.length === 0 ? (
                 <p className="text-greymain italic font-body mb-8 p-4 bg-gray-50 rounded-b-2xl border border-gray-100 border-t-0 shadow-lg">
                     You have not submitted any tips for this raceday yet.
                 </p>
@@ -43,7 +49,7 @@ export function MyTipsSection({ userTips }: MyTipsSectionProps) {
                     </div>
 
                     {/* Tip Rows */}
-                    {userTips.map((tip, index) => {
+                    {tips.map((tip, index) => { // 💡 USE 'tips' HERE
                         
                         // Main Runner details
                         const mainRunnerNo = tip.tip_main;
